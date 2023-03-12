@@ -4,7 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 import FullCalendar from '@fullcalendar/react';
-import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction" // needed for dayClick
+import interactionPlugin, { 
+    DateClickArg,
+    EventDragStopArg,
+    EventDragStartArg
+} from "@fullcalendar/interaction" // needed for dayClick
 import dayjs from 'dayjs';
 import {
     formatDate,
@@ -77,14 +81,6 @@ const Home = ({ user }: { user: User }) => {
             .order("id", { ascending: false });
         if (error) console.log("error", error);
         else {
-            // Dummy Events
-            if (events && events.length === 0) {
-                events = [
-                    { title: 'eventを', start: 1677138407, color: "red" },
-                    { title: 'こんな感じで追加できます', start: 1677138407, end: 1677138407 + 86400 },
-                    { title: '追加できます', start: 1677138407, end: 1677138407 + 300000, color: "blue" }
-                ]
-            }
             console.log("Events: ", events);
             setEvents(events as IEvent[]);
         }
@@ -127,16 +123,28 @@ const Home = ({ user }: { user: User }) => {
         }
     }
 
-    const handleEvents = (events: EventApi[]) => {
-        const ievents = events.map((e) => {
-            return {
-                start: e.start?.getTime(),
-                end: e.end?.getTime(),
-                color: 'blue',
-                title: e.title
-            } as IEvent
+    const convertToIEvent = (e: EventApi) => {
+        return {
+            id: e.id ? Number(e.id): undefined,
+            start: e.start!.getTime()/1000,
+            end: e.end? e.end.getTime()/1000: undefined,
+            color: 'blue',
+            title: e.title
+        } as IEvent
+    }
+
+    const handleUpdatedEvents = (updated_events: EventApi[]) => {
+        // Ugly...
+        const modified = updated_events.filter((ie) => {
+            let e = events.find((v, i, l) => {return v.id == Number(ie?.id) })
+            return (dayjs(e?.start).toDate().getTime() != ie.start?.getTime() || 
+                    dayjs(e?.end).toDate().getTime() != ie.end?.getTime() ||
+                    e?.title != ie.title)
         })
-        //setEvents(ievents);
+        console.log ("Events modified: ", modified)
+        modified.map((e) => {
+            addEvent(convertToIEvent(e))
+        })
     }
 
     const handleDateSelect = (arg: DateSelectArg) => {
@@ -144,7 +152,6 @@ const Home = ({ user }: { user: User }) => {
         let calendarApi = arg.view.calendar
     
         calendarApi.unselect() // clear date selection
-    
         /* if (title) {
             calendarApi.addEvent({
                 id: createEventId(),
@@ -167,7 +174,7 @@ const Home = ({ user }: { user: User }) => {
         setReservationInfo(info);
     }
 
-    const onDateClick = (arg: DateClickArg) => {
+    const handleDateClick = (arg: DateClickArg) => {
         console.log("date click: ", arg)
 /*         let info: ReserveDialogProps =
         {
@@ -182,12 +189,7 @@ const Home = ({ user }: { user: User }) => {
 
     const modifyEvent = (event: IEvent) => {
         setReservationInfo(null);
-        console.log(event.id);
-        console.log(event.start);
-        console.log(event.end);
-        console.log(event.title);
         addEvent(event);
-        //setEvents([...events, event]);
     }
 
     const deleteEvent = async (id: string|undefined) => {
@@ -203,7 +205,7 @@ const Home = ({ user }: { user: User }) => {
         } 
     }
 
-    const onEventClick = (event: EventClickArg) => {
+    const handleEventClick = (event: EventClickArg) => {
         console.log("event click:", event)
         let info: ReserveDialogProps =
         {
@@ -217,6 +219,14 @@ const Home = ({ user }: { user: User }) => {
             onDelete: deleteEvent
         }
         setReservationInfo(info);
+    }
+
+    const handleDragStart = (event:EventDragStartArg) => {
+        console.log("event drag start: ", event)
+    }
+
+    const handleDragStop = (event:EventDragStopArg) => {
+        console.log("event drag end: ", event)
     }
 
     const handleLogout = async () => {
@@ -267,6 +277,12 @@ const Home = ({ user }: { user: User }) => {
         { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
     ];
 
+    const businessHours =  {
+        daysOfWeek: [ 1, 2, 3, 4, 5 ], // Monday - Friday 
+        startTime: '08:30',
+        endTime: '17:15',
+    }
+
     return recoveryToken ? (
         <RecoverPassword
             token={recoveryToken}
@@ -290,17 +306,21 @@ const Home = ({ user }: { user: User }) => {
                     initialView="dayGridMonth"
                     locales={[jaLocale]}
                     locale='ja'
+                    businessHours={businessHours}
+                    nowIndicator={true}
                     headerToolbar={{
                         left: 'prev,next today',
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay',
                     }}
                     timeZone='local'
+                    editable={true}
                     navLinks={true}
-                    dateClick={onDateClick}
-                    eventClick={onEventClick}
-                    eventsSet={handleEvents} 
-                    
+                    dateClick={handleDateClick}
+                    eventClick={handleEventClick}
+                    eventsSet={handleUpdatedEvents} 
+                    eventDragStart={handleDragStart}
+                    eventDragStop={handleDragStop}
                     selectable={true}
                     select={handleDateSelect}
                     events={events as []}
