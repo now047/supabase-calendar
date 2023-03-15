@@ -112,7 +112,8 @@ const Home = ({ user }: { user: User }) => {
                     title: e.title,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
-                    color: 'blue'
+                    color: 'blue',
+                    user_id: user.id
                 })
                 .single();
             if (error) setError(error.message);
