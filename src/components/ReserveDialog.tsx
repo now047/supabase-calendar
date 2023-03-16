@@ -33,6 +33,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { StaticDateTimePicker } from '@mui/x-date-pickers/StaticDateTimePicker';
 import { useTimePickerDefaultizedProps } from '@mui/x-date-pickers/TimePicker/shared';
 
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction"
@@ -53,7 +54,7 @@ export interface ReserveDialogProps {
     start: number;
     end?: number;
     title?: string;
-    onClose: (event: IEvent) => void;
+    onClose: (event: IEvent|null) => void;
     onDelete: (id: string|undefined) => void;
 }
 
@@ -65,14 +66,18 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     const titleTextRef = React.useRef('');
     const startRef = React.useRef();
 
-    const handleClose = () => {
-        props.onClose({
-            id: props.id,
-            start: start.unix(),
-            end: end.unix(),
-            title: title,
-            color: 'green',
-        } as IEvent);
+    const handleClose = (cancel: boolean) => {
+        if (!cancel){
+            props.onClose({
+                id: props.id,
+                start: start.unix(),
+                end: end.unix(),
+                title: title,
+                color: 'green',
+            } as IEvent);
+        } else {
+            props.onClose(null);
+        }
     };
 
     const handleStartChange = (s: Dayjs|null) => {
@@ -112,9 +117,9 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     }
 
     return (
-        <Dialog onClose={handleClose} open={props.open}>
+        <Dialog onClose={handleClose.bind(null, true)} open={props.open}>
+            <DialogTitle>Make Reservation !</DialogTitle>
             <Box sx={{ '& > :not(style)': { m: 2 } }}>
-                <DialogTitle>Make Reservation !</DialogTitle>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DemoContainer
                         components={[
@@ -134,11 +139,12 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                             <TextField required id="title-input" label="Input purpose of use" variant="outlined"
                                         value={title} onChange={handleTitleChange}/>
                         </DemoItem>
-                        <DemoItem label={<ProLabel>Delete Reservation</ProLabel>} component='Delete'>
+                        <DemoItem component='Delete'>
                         {props.id ?
                             (<Button onClick={handleDelete} variant="text">Delete</Button>) :
                             (<Button onClick={handleDelete} variant="text">Cancel</Button>)
                         }
+                        <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
                         </DemoItem>
                     </DemoContainer>
                 </LocalizationProvider>

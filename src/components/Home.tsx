@@ -188,9 +188,11 @@ const Home = ({ user }: { user: User }) => {
         setReservationInfo(info); */
     }
 
-    const modifyEvent = (event: IEvent) => {
+    const modifyEvent = (event: IEvent|null) => {
         setReservationInfo(null);
-        addEvent(event);
+        if (event !== null){
+            addEvent(event);
+        }
     }
 
     const deleteEvent = async (id: string|undefined) => {
