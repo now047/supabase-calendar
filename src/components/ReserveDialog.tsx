@@ -89,7 +89,6 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     }
  
     const handleEndChange = (e: Dayjs|null) => {
-        console.log(e?.toDate())
         if (e !== null) {
             setEnd(e)
         }
