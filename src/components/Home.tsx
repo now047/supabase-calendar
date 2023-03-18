@@ -27,12 +27,23 @@ import {
     GridColDef,
     GridValueGetterParams,
     GridRowId,
+    GridValueFormatterParams,
+    GridRenderCellParams,
     GridCellModesModel } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
 
-import {createEventId, IEvent, toDateString} from "../lib/event-utils"
+import IEvent, {
+    colorMap,
+    toDateString,
+    strToTimestamp,
+    dateToTimestamp,
+    toSimpleDateString } from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
+
+import Resource from "../lib/resource-utils"
 
 interface SelectedCellParams {
     id: GridRowId;
@@ -41,10 +52,11 @@ interface SelectedCellParams {
     end: number;
 }
 
-const Home = ({ user }: { user: User }) => {
+ const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
-    const [initialized, setInitialized] = useState<boolean>(false);
     const [events, setEvents] = useState<IEvent[]>([]);
+    const [resources, setResources] = useState<Resource[]>([]);
+    const [eventSynced, setEventSynced] = useState<boolean>(false);
     const newTaskTextRef = useRef<HTMLInputElement>(null);
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
@@ -58,6 +70,7 @@ const Home = ({ user }: { user: User }) => {
     }
 
     useEffect(() => {
+        console.log("useEffect")
         /* Recovery url is of the form
          * <SITE_URL>#access_token=x&refresh_token=y&expires_in=z&token_type=bearer&type=recovery
          * Read more on https://supabase.com/docs/reference/javascript/reset-password-email#notes
@@ -81,9 +94,12 @@ const Home = ({ user }: { user: User }) => {
             setRecoveryToken(result.access_token);
         }
 
-        console.log('calling fetch events')
-        fetchEvents().catch(console.error);
-    }, []);
+        if (!eventSynced) {
+            console.log('calling fetch events')
+            fetchEvents().catch(console.error);
+            fetchResources().catch(console.error);
+        }
+    }, [eventSynced, errorText, reservationInfo]);
 
     const fetchEvents = async () => {
         let { data: events, error } = await supabase
@@ -94,10 +110,25 @@ const Home = ({ user }: { user: User }) => {
         else {
             console.log("Events: ", events);
             setEvents(events as IEvent[]);
+            setEventSynced(true)
         }
     };
 
-   const addEvent = async (e: IEvent) => {
+    const fetchResources = async () => {
+        let { data: resources, error } = await supabase
+            .from("resources")
+            .select("*")
+            .order("id", { ascending: false });
+        if (error) console.log("error", error);
+        else {
+            console.log("Resources: ", events);
+            setResources(resources as Resource[]);
+        }
+    };
+
+    const getResouceColor = (id: number) => colorMap.get(resources.filter(r => r.id === id)[0].display_color)
+    
+    const addEvent = async (e: IEvent) => {
         console.log("addEvent:", e);
         if (e.id) {
             let { data: event, error } = await supabase
@@ -107,12 +138,13 @@ const Home = ({ user }: { user: User }) => {
                     title: e.title,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
-                    color: 'red'
+                    color: getResouceColor(e.resource_id),
+                    resource_id: e.resource_id 
                 })
                 .single();
             if (error) setError(error.message);
             else {
-                setEvents([event, ...events.filter((evt => evt.id != e.id))]);
+                setEventSynced(false);
                 console.log('Updated event:', events)
                 setError(null);
             }
@@ -123,44 +155,42 @@ const Home = ({ user }: { user: User }) => {
                     title: e.title,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
-                    color: 'blue',
-                    user_id: user.id
+                    color: getResouceColor(e.resource_id),
+                    user_id: user.id,
+                    resource_id: e.resource_id 
                 })
                 .single();
             if (error) setError(error.message);
             else {
-                setEvents([event, ...events]);
+                setEventSynced(false);
                 setError(null);
             }
         }
     }
 
-    const convertToIEvent = (e: EventApi) => {
-        return {
-            id: e.id ? Number(e.id): undefined,
-            start: e.start!.getTime()/1000,
-            end: e.end === null ? e.start!.getTime()/1000 + 1: e.end.getTime()/1000,
-            color: 'blue',
-            title: e.title
-        } as IEvent
+    const eventDiffers = (e: IEvent, ie: EventApi) => {
+        return ie.start === null ||
+               strToTimestamp(e.start.toString()) !== dateToTimestamp(ie.start) ||
+               ie.end === null ||
+               strToTimestamp(e.end.toString()) !== dateToTimestamp(ie.end) ||
+               e.title !== ie.title
     }
 
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
-        // Ugly...
-        const modified = updated_events.filter((ie) => {
-            let e = events.find((v, i, l) => {return v.id == Number(ie?.id) })
-            return (dayjs(e?.start).toDate().getTime() != ie.start?.getTime() || 
-                    dayjs(e?.end).toDate().getTime() != ie.end?.getTime() ||
-                    e?.title != ie.title)
-        })
-        console.log ("Events modified: ", modified)
-        modified.map((e) => {
-            addEvent(convertToIEvent(e))
+        console.log("Update notified.")
+        events.map(e => {
+            let ie = updated_events.find((ie, i, l) => { return Number(ie.id) == e.id })
+            if (ie !== undefined && eventDiffers(e, ie)) {
+                e.start = dateToTimestamp(ie.start!);
+                e.end = dateToTimestamp(ie.end!);
+                e.title = ie.title;
+                addEvent(e)
+            }
+            return e;
         })
     }
 
     const handleDateSelect = (arg: DateSelectArg) => {
-        //let title = prompt('Please enter a new title for your event')
         let calendarApi = arg.view.calendar
     
         calendarApi.unselect() // clear date selection
@@ -180,6 +210,7 @@ const Home = ({ user }: { user: User }) => {
             user: 'dummyUser',
             start: arg.start.getTime(),
             end: arg.end.getTime(),
+            resources: resources,
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
@@ -214,7 +245,7 @@ const Home = ({ user }: { user: User }) => {
                 .from("events")
                 .delete()
                 .eq('id', id)
-            setEvents(events.filter((event => event.id?.toString() != id)));
+            setEventSynced(false);
             setError(null);
         } 
     }
@@ -229,6 +260,8 @@ const Home = ({ user }: { user: User }) => {
             start: event.event.start?.getTime()?? dayjs('today').toDate().getTime(),
             end: event.event.end?.getTime()?? dayjs('today').toDate().getTime(),
             title: event.event.title,
+            resources: resources,
+            resource_id: events.filter((e) => { return e.id! === Number(event.event.id)})[0].resource_id,
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
@@ -252,7 +285,55 @@ const Home = ({ user }: { user: User }) => {
 
     }
 
-    const columns: GridColDef[] = [
+    const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
+        return <>
+                <Avatar sx={{
+                        bgcolor: colorMap.get(params.value!.display_color),
+                        width: 24, height: 24
+                    }}>
+                    {params.value!.name[0]}
+                </Avatar>
+                <Typography sx={{padding: 1}}>
+                    {params.value!.name}
+                </Typography>
+            </>
+    }
+    const resourceTableColumns: GridColDef[] = [
+        {
+            field: 'this',
+            headerName: 'Name',
+            width: 200,
+            editable: false,
+            renderCell: resourceAvatar
+        },
+        {
+            field: 'type',
+            headerName: 'Type',
+            width: 100,
+            editable: false,
+        },
+        {
+            field: 'generation',
+            headerName: 'Generation',
+            width: 100,
+            editable: false,
+        },
+        {
+            field: 'note',
+            headerName: 'Note',
+            width: 300,
+            editable: false,
+        },
+    ]
+
+    const renderDateString = (params: GridRenderCellParams<string>) => {
+        if (params.value === undefined) 
+            return '-'
+        else
+            return toSimpleDateString(params.value)
+    }
+
+    const eventTableColumns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 90 },
         {
             field: 'title',
@@ -266,6 +347,7 @@ const Home = ({ user }: { user: User }) => {
             type: 'string',
             width: 200,
             editable: false,
+            renderCell: renderDateString
         },
         {
             field: 'end',
@@ -273,6 +355,7 @@ const Home = ({ user }: { user: User }) => {
             type: 'string',
             width: 180,
             editable: false,
+            renderCell: renderDateString
         }
     ];
 
@@ -300,38 +383,13 @@ const Home = ({ user }: { user: User }) => {
                     <Button variant="outlined">Outlined</Button>
                 </Stack>
             </header>
-            <div>
-                <h2>Calendar</h2>
-                <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                    initialView="dayGridMonth"
-                    locales={[jaLocale]}
-                    locale='ja'
-                    businessHours={businessHours}
-                    nowIndicator={true}
-                    headerToolbar={{
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay',
-                    }}
-                    timeZone='local'
-                    editable={true}
-                    navLinks={true}
-                    dateClick={handleDateClick}
-                    eventClick={handleEventClick}
-                    eventsSet={handleUpdatedEvents} 
-                    eventDragStart={handleDragStart}
-                    eventDragStop={handleDragStop}
-                    selectable={true}
-                    select={handleDateSelect}
-                    events={events as []}
-                />
+            <Stack spacing={10}>
                 <div className={"flex m-4 justify-center"}>
-                    <Box mt={4} sx={{height: 400, width: '100%'}}>
-                        <h2> Reservation List </h2>
+                    <Box sx={{height: 300, width: '100%'}}>
+                        <h2> Ressorce List </h2>
                         <DataGrid
-                            rows={events}
-                            columns={columns}
+                            rows={resources.map((r) => {return {...r, "this": r}})}
+                            columns={resourceTableColumns}
                             pageSize={5}
                             rowsPerPageOptions={[5]}
                             checkboxSelection
@@ -341,7 +399,49 @@ const Home = ({ user }: { user: User }) => {
                         />
                     </Box>
                 </div>
-            </div>
+                <div className={"flex m-4 justify-center"}>
+                    <h2>Calendar</h2>
+                    <FullCalendar
+                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                        initialView="dayGridMonth"
+                        locales={[jaLocale]}
+                        locale='ja'
+                        businessHours={businessHours}
+                        nowIndicator={true}
+                        headerToolbar={{
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                        }}
+                        timeZone='local'
+                        editable={true}
+                        navLinks={true}
+                        dateClick={handleDateClick}
+                        eventClick={handleEventClick}
+                        eventsSet={handleUpdatedEvents} 
+                        eventDragStart={handleDragStart}
+                        eventDragStop={handleDragStop}
+                        selectable={true}
+                        select={handleDateSelect}
+                        events={events as []}
+                    />
+                </div>
+                <div className={"flex m-4 justify-center"}>
+                    <Box sx={{height: 400, width: '100%'}}>
+                        <h2> Reservation List </h2>
+                        <DataGrid
+                            rows={events}
+                            columns={eventTableColumns}
+                            pageSize={5}
+                            rowsPerPageOptions={[5]}
+                            checkboxSelection
+                            disableSelectionOnClick
+                            experimentalFeatures={{ newEditingApi: true }}
+                            onCellDoubleClick={handleDubleClickOnTable}
+                        />
+                    </Box>
+                </div>
+            </Stack>
             <div className={"flex flex-col flex-grow p-4"} style={{ height: "calc(100vh - 11.5rem)" }} >
                 {!!errorText && (
                     <div className={ "border max-w-sm self-center px-4 py-2 mt-4 text-center text-sm bg-red-100 border-red-300 text-red-400" } >

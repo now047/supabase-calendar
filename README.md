@@ -56,6 +56,7 @@ create table events (
   start timestamptz,
   "end" timestamptz,
   color text,
+  resource_id int,
   created_at timestamptz default timezone('utc'::text, now()) not null
 );
 
