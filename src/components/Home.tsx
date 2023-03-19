@@ -32,18 +32,19 @@ import {
     GridCellModesModel } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 
 import IEvent, {
-    colorMap,
     toDateString,
     strToTimestamp,
     dateToTimestamp,
     toSimpleDateString } from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
+import ResourceDialog, {ResourceDialogProps} from "./ResourceDialog";
 
-import Resource from "../lib/resource-utils"
+import Resource, { colorMap } from "../lib/resource-utils"
 
 interface SelectedCellParams {
     id: GridRowId;
@@ -57,9 +58,11 @@ interface SelectedCellParams {
     const [events, setEvents] = useState<IEvent[]>([]);
     const [resources, setResources] = useState<Resource[]>([]);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
+    const [resourceSynced, setResourceSynced] = useState<boolean>(false);
     const newTaskTextRef = useRef<HTMLInputElement>(null);
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
+    const [resourceAdding, setResourceAdding] = useState(false);
     const [selectedCellParams, setSelectedCellParams] = React.useState<SelectedCellParams | null>(null);
     interface IResults {
         access_token: string;
@@ -97,9 +100,12 @@ interface SelectedCellParams {
         if (!eventSynced) {
             console.log('calling fetch events')
             fetchEvents().catch(console.error);
+        }
+        if (!resourceSynced) {
+            console.log('calling fetch resources')
             fetchResources().catch(console.error);
         }
-    }, [eventSynced, errorText, reservationInfo]);
+    }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
     const fetchEvents = async () => {
         let { data: events, error } = await supabase
@@ -163,6 +169,46 @@ interface SelectedCellParams {
             if (error) setError(error.message);
             else {
                 setEventSynced(false);
+                setError(null);
+            }
+        }
+    }
+
+    const addResource = async (r: Resource) => {
+        console.log("addResource:", r);
+        if (r.id) {
+            let { data: resource, error } = await supabase
+                .from("resources")
+                .update({
+                    id: r.id,
+                    name: r.name,
+                    type: r.type,
+                    generation: r.generation,
+                    display_color: r.display_color,
+                    note: r.note
+                })
+                .single();
+            if (error) setError(error.message);
+            else {
+                setResourceSynced(false);
+                console.log('Updated resources', resources)
+                setError(null);
+            }
+        } else {
+            let { data: event, error } = await supabase
+                .from("resources")
+                .insert({
+                    id: r.id,
+                    name: r.name,
+                    type: r.type,
+                    generation: r.generation,
+                    display_color: r.display_color,
+                    note: r.note
+                })
+                .single();
+            if (error) setError(error.message);
+            else {
+                setResourceSynced(false);
                 setError(null);
             }
         }
@@ -285,6 +331,22 @@ interface SelectedCellParams {
 
     }
 
+    const handleResourceAdd = () => {
+        setResourceAdding(true);
+    }
+
+    const handleResourceDialogClose = (resource: Resource | null) => {
+        console.log("add resource")
+        setResourceAdding(false);
+        if (resource !== null)
+            addResource(resource)
+    }
+
+    const deleteResource = () => {
+        console.log("delete resource")
+        setResourceAdding(false);
+    }
+
     const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
         return <>
                 <Avatar sx={{
@@ -374,6 +436,19 @@ interface SelectedCellParams {
         <div className={"supabase-calendar-main"}>
             <ReserveDialog {...reservationInfo} />
         </div>
+    ) : resourceAdding ? (
+        <div className={"supabase-calendar-main"}>
+            <ResourceDialog {
+                ...{ 
+                    name: "",
+                    generation: "",
+                    type: "",
+                    open: true,
+                    resources: resources,
+                    onClose: handleResourceDialogClose,
+                    onDelete: deleteResource
+                }} />
+        </div>
     ) : (
         <div className={"supabase-calendar-main"}>
             <header>
@@ -386,7 +461,18 @@ interface SelectedCellParams {
             <Stack spacing={10}>
                 <div className={"flex m-4 justify-center"}>
                     <Box sx={{height: 300, width: '100%'}}>
-                        <h2> Ressorce List </h2>
+                        <h2> Ressorces </h2>
+                        <Box aria-label="resource-table-button-group" 
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'row-reverse',
+                                justifyContent: 'space-between',
+                                m: 1,
+                                border: 0
+                            }}>
+                            <Button variant="outlined" size='small' onClick={handleResourceAdd}>Add</Button>
+                            <Button variant="outlined" size='small'> Delete</Button>
+                        </Box>
                         <DataGrid
                             rows={resources.map((r) => {return {...r, "this": r}})}
                             columns={resourceTableColumns}
@@ -428,7 +514,7 @@ interface SelectedCellParams {
                 </div>
                 <div className={"flex m-4 justify-center"}>
                     <Box sx={{height: 400, width: '100%'}}>
-                        <h2> Reservation List </h2>
+                        <h2> Reservations </h2>
                         <DataGrid
                             rows={events}
                             columns={eventTableColumns}

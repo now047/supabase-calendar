@@ -173,11 +173,13 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                                     value={title} onChange={handleTitleChange}/>
                     </DemoItem>
                     <DemoItem component='Delete'>
-                    {props.id ?
-                        (<Button onClick={handleDelete} variant="text">Delete</Button>) :
-                        (<Button onClick={handleDelete} variant="text">Cancel</Button>)
-                    }
-                    <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
+                    <Stack paddingBottom={2} justifyContent={"space-between"} direction="row">
+                        {props.id ?
+                            (<Button onClick={handleDelete} variant="text">Delete</Button>) :
+                            (<Button onClick={handleDelete} variant="text">Cancel</Button>)
+                        }
+                        <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
+                    </Stack>
                     </DemoItem>
                 </DemoContainer>
             </Box>
