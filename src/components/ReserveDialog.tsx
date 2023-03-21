@@ -60,7 +60,7 @@ export interface ReserveDialogProps {
     resources: Resource[];
     resource_id?: number;
     onClose: (event: IEvent|null) => void;
-    onDelete: (id: string|undefined) => void;
+    onDelete: (id: string| undefined, title: string|undefined) => void;
 }
 
 const ReserveDialog = (props: ReserveDialogProps) => {
@@ -74,13 +74,17 @@ const ReserveDialog = (props: ReserveDialogProps) => {
 
     const handleClose = (cancel: boolean) => {
         if (!cancel){
-            props.onClose({
-                id: props.id,
-                start: start.unix(),
-                end: end.unix(),
-                title: title,
-                resource_id: resource_id
-            } as IEvent);
+            if (title === ""){
+                window.alert("Please input purpose of use for the event.")
+            } else {
+                props.onClose({
+                    id: props.id,
+                    start: start.unix(),
+                    end: end.unix(),
+                    title: title,
+                    resource_id: resource_id
+                } as IEvent);
+            }
         } else {
             props.onClose(null);
         }
@@ -105,7 +109,7 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     }
 
     const handleDelete = () => {
-        props.onDelete(props.id)
+        props.onDelete(props.id, title)
     }
 
 
@@ -134,18 +138,20 @@ const ReserveDialog = (props: ReserveDialogProps) => {
             <Box sx={{ '& > :not(style)': { m: 2 } }}>
                 <DemoContainer
                     components={[
+                        'Purpose',
                         'Resource',
                         'Start',
                         'End',
-                        'Purpose',
                         'Delete',
                     ]}
                 >
+                    <DemoItem label={<ProLabel>Purpose of Use</ProLabel>} component="Purpose" >
+                        <TextField autoFocus required id="title-input" label="Input purpose of use" variant="outlined"
+                                    value={title} onChange={handleTitleChange}/>
+                    </DemoItem>
                     <DemoItem label={<ProLabel>Resource</ProLabel>} component="Resource" >
                         <FormControl fullWidth>
-                            <InputLabel id="resource-select-label">Resource</InputLabel>
                             <Select
-                                labelId="resource-select-label"
                                 id="resource-select"
                                 value={resource_id.toString()}
                                 label="resource"
@@ -168,10 +174,6 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                             <DateTimePicker value={end} onChange={handleEndChange}/>
                         </DemoItem>
                     </LocalizationProvider>
-                    <DemoItem label={<ProLabel>Purpose of Use</ProLabel>} component="Purpose" >
-                        <TextField required id="title-input" label="Input purpose of use" variant="outlined"
-                                    value={title} onChange={handleTitleChange}/>
-                    </DemoItem>
                     <DemoItem component='Delete'>
                     <Stack paddingBottom={2} justifyContent={"space-between"} direction="row">
                         {props.id ?

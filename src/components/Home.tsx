@@ -27,6 +27,9 @@ import {
     GridColDef,
     GridValueGetterParams,
     GridRowId,
+    GridRowModel,
+    GridToolbarContainer,
+    useGridApiContext,
     GridValueFormatterParams,
     GridRenderCellParams,
     GridCellModesModel } from '@mui/x-data-grid';
@@ -129,6 +132,7 @@ interface SelectedCellParams {
         else {
             console.log("Resources: ", events);
             setResources(resources as Resource[]);
+            setResourceSynced(true);
         }
     };
 
@@ -283,16 +287,18 @@ interface SelectedCellParams {
         }
     }
 
-    const deleteEvent = async (id: string|undefined) => {
-        console.log("deleteEvent:", id);
+    const deleteEvent = async (id: string|undefined, title: string|undefined) => {
+        console.log("deleteEvent:", title);
         setReservationInfo(null);
-        if (id) {
-            let res = await supabase
-                .from("events")
-                .delete()
-                .eq('id', id)
-            setEventSynced(false);
-            setError(null);
+        if (title && id) {
+            if (window.confirm(`Are you sure you want to delete the event '${title}'`)) {
+                let res = await supabase
+                    .from("events")
+                    .delete()
+                    .eq('id', id)
+                setEventSynced(false);
+                setError(null);
+            }
         } 
     }
 
@@ -335,16 +341,53 @@ interface SelectedCellParams {
         setResourceAdding(true);
     }
 
+    const deleteResource = async (id: string|undefined) => {
+        setReservationInfo(null);
+        if (id) {
+            let res = await supabase
+                .from("resources")
+                .delete()
+                .eq('id', id)
+            setResourceSynced(false);
+            setError(null);
+        } 
+    }
+
+    function CustomToolbar() {
+        const apiRef = useGridApiContext();
+      
+        const deleteResourceSelected = () => {
+            //apiRef.current.setPage(1);
+            const selectedRows: Map<GridRowId, GridRowModel> = apiRef.current.getSelectedRows();
+            const iter = selectedRows.entries()
+            let ent = iter.next();
+            while (!ent.done) {
+                const resource = ent.value[1];
+                if (window.confirm(`Are you sure to delete '${resource.name}'`)){
+                    deleteResource(resource.id)
+                }
+                ent = iter.next();
+            }
+        }
+      
+        return (
+          <GridToolbarContainer 
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                }}>
+            <Button size='small' onClick={deleteResourceSelected}>Delete</Button>
+            <Button size='small' onClick={handleResourceAdd}>Add</Button>
+          </GridToolbarContainer>
+        );
+      }
+
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource")
         setResourceAdding(false);
         if (resource !== null)
             addResource(resource)
-    }
-
-    const deleteResource = () => {
-        console.log("delete resource")
-        setResourceAdding(false);
     }
 
     const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
@@ -462,25 +505,14 @@ interface SelectedCellParams {
                 <div className={"flex m-4 justify-center"}>
                     <Box sx={{height: 300, width: '100%'}}>
                         <h2> Ressorces </h2>
-                        <Box aria-label="resource-table-button-group" 
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row-reverse',
-                                justifyContent: 'space-between',
-                                m: 1,
-                                border: 0
-                            }}>
-                            <Button variant="outlined" size='small' onClick={handleResourceAdd}>Add</Button>
-                            <Button variant="outlined" size='small'> Delete</Button>
-                        </Box>
                         <DataGrid
                             rows={resources.map((r) => {return {...r, "this": r}})}
                             columns={resourceTableColumns}
-                            pageSize={5}
                             rowsPerPageOptions={[5]}
                             checkboxSelection
+                            components={{Toolbar: CustomToolbar}}
                             disableSelectionOnClick
-                            experimentalFeatures={{ newEditingApi: true }}
+                            // experimentalFeatures={{ newEditingApi: true }}
                             onCellDoubleClick={handleDubleClickOnTable}
                         />
                     </Box>
