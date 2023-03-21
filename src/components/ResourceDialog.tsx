@@ -52,7 +52,6 @@ export interface ResourceDialogProps {
     resource_id?: number,
     open: boolean,
     onClose: (resource: Resource|null) => void,
-    onDelete: (id: string|undefined) => void,
 }
 
 const ReserveDialog = (props: ResourceDialogProps) => {
@@ -95,10 +94,6 @@ const ReserveDialog = (props: ResourceDialogProps) => {
             props.onClose(null);
         }
     };
-
-    const handleDelete = () => {
-        props.onDelete(props.id)
-    }
 
     const handleNameChange = (event: any) => {
         console.log("name change:", event.target.value)
@@ -230,10 +225,7 @@ const ReserveDialog = (props: ResourceDialogProps) => {
 
                     <DemoItem component='Delete'>
                     <Stack paddingBottom={2} justifyContent={"space-between"} direction="row">
-                        {props.id ?
-                            (<Button onClick={handleDelete} variant="text">Delete</Button>) :
-                            (<Button onClick={handleDelete} variant="text">Cancel</Button>)
-                        }
+                        <Button onClick={handleClose.bind(null, true)} variant="text">Cancel</Button>
                         <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
                     </Stack>
                     </DemoItem>

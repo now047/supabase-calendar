@@ -79,8 +79,8 @@ const ReserveDialog = (props: ReserveDialogProps) => {
             } else {
                 props.onClose({
                     id: props.id,
-                    start: start.unix(),
-                    end: end.unix(),
+                    start: start.unix() * 1000,
+                    end: end.unix() * 1000,
                     title: title,
                     resource_id: resource_id
                 } as IEvent);
@@ -91,8 +91,6 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     };
 
     const handleStartChange = (s: Dayjs|null) => {
-        console.log("start utc offset: ", s?.utcOffset());
-        console.log(s?.toISOString())
         if (s !== null) {
             setStart(s)
         }

@@ -6,51 +6,29 @@ import {
   EventContentArg,
   formatDate,
 } from '@fullcalendar/core'
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 
-import {createEventId } from "../lib/event-utils";
+type SupabaseCalendarConfig = {
+  weekEndVisible: boolean,
+  listView: boolean,
+}
 
+const defaultConfig: SupabaseCalendarConfig = {
+  weekEndVisible: true,
+  listView: false,
+}
+
+const SupaCalendarContext = React.createContext(defaultConfig)
 const Sidebar = () => {
     const [weekendsVisible, setWeekendVisible] = useState<boolean>(false);
-    const [events, setEvents] = useState<EventApi[]>([]);
-
     const handleWeekendsToggle = () => {
         setWeekendVisible(!weekendsVisible);
-    }
-
-    const handleDateSelect = (selectInfo: DateSelectArg) => {
-        let title = prompt('Please enter a new title for your event')
-        let calendarApi = selectInfo.view.calendar
-        calendarApi.unselect() // clear date selection
-
-        if (title) {
-            calendarApi.addEvent({
-                id: createEventId(),
-                title,
-                start: selectInfo.startStr,
-                end: selectInfo.endStr,
-                allDay: selectInfo.allDay
-            })
-        }
     }
 
     const handleEventClick = (clickInfo: EventClickArg) => {
         if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
             clickInfo.event.remove()
         }
-    }
-
-    const handleEvents = (events: EventApi[]) => {
-        setEvents(events);
-    }
-
-    const renderEventContent = (eventContent: EventContentArg) => {
-        return (
-            <>
-            <b>{eventContent.timeText}</b>
-            <i>{eventContent.event.title}</i>
-            </>
-        )
     }
 
     const renderSidebarEvent = (event: EventApi) => {
@@ -83,10 +61,6 @@ const Sidebar = () => {
           </label>
         </div>
         <div className='supabase-calendar-sidebar-section'>
-          <h2>All Events ({events.length})</h2>
-          <ul>
-            {events.map(renderSidebarEvent)}
-          </ul>
         </div>
       </div>
     )

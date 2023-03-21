@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import React from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, createContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 import FullCalendar from '@fullcalendar/react';
@@ -11,8 +11,8 @@ import interactionPlugin, {
 } from "@fullcalendar/interaction" // needed for dayClick
 import dayjs from 'dayjs';
 import {
-    formatDate,
     EventContentArg,
+    EventSourceInput,
     EventClickArg,
     DateSelectArg,
     EventApi,
@@ -43,20 +43,15 @@ import IEvent, {
     toDateString,
     strToTimestamp,
     dateToTimestamp,
-    toSimpleDateString } from "../lib/event-utils"
+    toLocalDateString } from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
 import ResourceDialog, {ResourceDialogProps} from "./ResourceDialog";
 
 import Resource, { colorMap } from "../lib/resource-utils"
 
-interface SelectedCellParams {
-    id: GridRowId;
-    title: string;
-    start: number;
-    end: number;
-}
+//export const ResourceContext = createContext([]);
 
- const Home = ({ user }: { user: User }) => {
+const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [events, setEvents] = useState<IEvent[]>([]);
     const [resources, setResources] = useState<Resource[]>([]);
@@ -66,7 +61,6 @@ interface SelectedCellParams {
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const [selectedCellParams, setSelectedCellParams] = React.useState<SelectedCellParams | null>(null);
     interface IResults {
         access_token: string;
         refresh_token: string;
@@ -110,6 +104,13 @@ interface SelectedCellParams {
         }
     }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
+    // Menue
+    const handleLogout = async () => {
+        supabase.auth.signOut().catch(console.error);
+    };
+
+
+    // Events
     const fetchEvents = async () => {
         let { data: events, error } = await supabase
             .from("events")
@@ -118,26 +119,11 @@ interface SelectedCellParams {
         if (error) console.log("error", error);
         else {
             console.log("Events: ", events);
-            setEvents(events as IEvent[]);
+            setEvents(events?.map((e) => {return {...e, start: strToTimestamp(e.start), end: strToTimestamp(e.end)}}) as IEvent[]);
             setEventSynced(true)
         }
     };
 
-    const fetchResources = async () => {
-        let { data: resources, error } = await supabase
-            .from("resources")
-            .select("*")
-            .order("id", { ascending: false });
-        if (error) console.log("error", error);
-        else {
-            console.log("Resources: ", events);
-            setResources(resources as Resource[]);
-            setResourceSynced(true);
-        }
-    };
-
-    const getResouceColor = (id: number) => colorMap.get(resources.filter(r => r.id === id)[0].display_color)
-    
     const addEvent = async (e: IEvent) => {
         console.log("addEvent:", e);
         if (e.id) {
@@ -178,6 +164,73 @@ interface SelectedCellParams {
         }
     }
 
+    const eventDiffers = (e: IEvent, ie: EventApi) => {
+        return ie.start === null ||
+               e.start !== dateToTimestamp(ie.start) ||
+               ie.end === null ||
+               e.end !== dateToTimestamp(ie.end) ||
+               e.title !== ie.title
+    }
+
+    const handleUpdatedEvents = (updated_events: EventApi[]) => {
+        console.log("Update notified.")
+        events.map(e => {
+            let ie = updated_events.find((ie, i, l) => { return Number(ie.id) == e.id })
+            if (ie !== undefined && eventDiffers(e, ie)) {
+                const updated: IEvent = {
+                    start: dateToTimestamp(ie.start!),
+                    end: dateToTimestamp(ie.end!),
+                    title: ie.title,
+                    color: e.color,
+                    id: e.id,
+                    resource_id: e.resource_id
+                }
+                console.log('event changed:', updated)
+                addEvent(updated)
+            }
+            return e;
+        })
+    }
+
+    const modifyEvent = (event: IEvent|null) => {
+        setReservationInfo(null);
+        if (event !== null){
+            addEvent(event);
+        }
+    }
+
+    const deleteEvent = async (id: string|undefined, title: string|undefined) => {
+        console.log("deleteEvent:", title);
+        setReservationInfo(null);
+        if (title && id) {
+            if (window.confirm(`Are you sure you want to delete the event '${title}'`)) {
+                let res = await supabase
+                    .from("events")
+                    .delete()
+                    .eq('id', id)
+                setEventSynced(false);
+                setError(null);
+            }
+        } 
+    }
+
+
+    // Resources
+    const fetchResources = async () => {
+        let { data: resources, error } = await supabase
+            .from("resources")
+            .select("*")
+            .order("id", { ascending: false });
+        if (error) console.log("error", error);
+        else {
+            console.log("Resources: ", events);
+            setResources(resources as Resource[]);
+            setResourceSynced(true);
+        }
+    };
+
+    const getResouceColor = (id: number) => colorMap.get(resources.filter(r => r.id === id)[0].display_color)
+    
     const addResource = async (r: Resource) => {
         console.log("addResource:", r);
         if (r.id) {
@@ -218,28 +271,8 @@ interface SelectedCellParams {
         }
     }
 
-    const eventDiffers = (e: IEvent, ie: EventApi) => {
-        return ie.start === null ||
-               strToTimestamp(e.start.toString()) !== dateToTimestamp(ie.start) ||
-               ie.end === null ||
-               strToTimestamp(e.end.toString()) !== dateToTimestamp(ie.end) ||
-               e.title !== ie.title
-    }
 
-    const handleUpdatedEvents = (updated_events: EventApi[]) => {
-        console.log("Update notified.")
-        events.map(e => {
-            let ie = updated_events.find((ie, i, l) => { return Number(ie.id) == e.id })
-            if (ie !== undefined && eventDiffers(e, ie)) {
-                e.start = dateToTimestamp(ie.start!);
-                e.end = dateToTimestamp(ie.end!);
-                e.title = ie.title;
-                addEvent(e)
-            }
-            return e;
-        })
-    }
-
+    // Calendar
     const handleDateSelect = (arg: DateSelectArg) => {
         let calendarApi = arg.view.calendar
     
@@ -254,7 +287,7 @@ interface SelectedCellParams {
             })
         } */
         console.log("date selected: ", arg)
-        let info: ReserveDialogProps =
+        const info: ReserveDialogProps =
         {
             open: true,
             user: 'dummyUser',
@@ -269,37 +302,6 @@ interface SelectedCellParams {
 
     const handleDateClick = (arg: DateClickArg) => {
         console.log("date click: ", arg)
-/*         let info: ReserveDialogProps =
-        {
-            open: true,
-            user: 'dummyUser',
-            start: arg.date.getTime(),
-            onClose: modifyEvent,
-            onDelete: deleteEvent
-        }
-        setReservationInfo(info); */
-    }
-
-    const modifyEvent = (event: IEvent|null) => {
-        setReservationInfo(null);
-        if (event !== null){
-            addEvent(event);
-        }
-    }
-
-    const deleteEvent = async (id: string|undefined, title: string|undefined) => {
-        console.log("deleteEvent:", title);
-        setReservationInfo(null);
-        if (title && id) {
-            if (window.confirm(`Are you sure you want to delete the event '${title}'`)) {
-                let res = await supabase
-                    .from("events")
-                    .delete()
-                    .eq('id', id)
-                setEventSynced(false);
-                setError(null);
-            }
-        } 
     }
 
     const handleEventClick = (event: EventClickArg) => {
@@ -328,32 +330,13 @@ interface SelectedCellParams {
         console.log("event drag end: ", event)
     }
 
-    const handleLogout = async () => {
-        supabase.auth.signOut().catch(console.error);
-    };
-
     const handleDubleClickOnTable = () => {
         console.log('handleDubleClickOnTable')
 
     }
 
-    const handleResourceAdd = () => {
-        setResourceAdding(true);
-    }
-
-    const deleteResource = async (id: string|undefined) => {
-        setReservationInfo(null);
-        if (id) {
-            let res = await supabase
-                .from("resources")
-                .delete()
-                .eq('id', id)
-            setResourceSynced(false);
-            setError(null);
-        } 
-    }
-
-    function CustomToolbar() {
+    // ResourceTable
+    function ResourceTableToolBar() {
         const apiRef = useGridApiContext();
       
         const deleteResourceSelected = () => {
@@ -381,7 +364,22 @@ interface SelectedCellParams {
             <Button size='small' onClick={handleResourceAdd}>Add</Button>
           </GridToolbarContainer>
         );
-      }
+    }
+
+    const handleResourceAdd = () => {
+        setResourceAdding(true);
+    }
+
+    const deleteResource = async (id: string|undefined) => {
+        if (id) {
+            let res = await supabase
+                .from("resources")
+                .delete()
+                .eq('id', id)
+            setResourceSynced(false);
+            setError(null);
+        } 
+    }
 
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource")
@@ -431,13 +429,14 @@ interface SelectedCellParams {
         },
     ]
 
-    const renderDateString = (params: GridRenderCellParams<string>) => {
+    const renderDateString = (params: GridRenderCellParams<number>) => {
         if (params.value === undefined) 
             return '-'
         else
-            return toSimpleDateString(params.value)
+            return toLocalDateString(params.value)
     }
 
+    // EventTable
     const eventTableColumns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 90 },
         {
@@ -470,6 +469,7 @@ interface SelectedCellParams {
         endTime: '17:15',
     }
 
+    // render
     return recoveryToken ? (
         <RecoverPassword
             token={recoveryToken}
@@ -488,8 +488,7 @@ interface SelectedCellParams {
                     type: "",
                     open: true,
                     resources: resources,
-                    onClose: handleResourceDialogClose,
-                    onDelete: deleteResource
+                    onClose: handleResourceDialogClose
                 }} />
         </div>
     ) : (
@@ -510,7 +509,7 @@ interface SelectedCellParams {
                             columns={resourceTableColumns}
                             rowsPerPageOptions={[5]}
                             checkboxSelection
-                            components={{Toolbar: CustomToolbar}}
+                            components={{Toolbar: ResourceTableToolBar}}
                             disableSelectionOnClick
                             // experimentalFeatures={{ newEditingApi: true }}
                             onCellDoubleClick={handleDubleClickOnTable}
@@ -537,11 +536,23 @@ interface SelectedCellParams {
                         dateClick={handleDateClick}
                         eventClick={handleEventClick}
                         eventsSet={handleUpdatedEvents} 
-                        eventDragStart={handleDragStart}
-                        eventDragStop={handleDragStop}
+                        //eventDragStart={handleDragStart}
+                        //eventDragStop={handleDragStop}
+                        eventDurationEditable={true}
+                        eventResizableFromStart={false}
                         selectable={true}
                         select={handleDateSelect}
-                        events={events as []}
+                        //events={events as []}
+                        events={events.map((e) => {
+                            return {
+                                'start': e.start,
+                                'end': e.end,
+                                'color': e.color,
+                                'id': e.id,
+                                'title': e.title,
+                                'startEditable':true,
+                                'durationEditable': true}
+                        }) as []}
                     />
                 </div>
                 <div className={"flex m-4 justify-center"}>
