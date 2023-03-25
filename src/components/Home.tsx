@@ -27,19 +27,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import {
     DataGrid,
     GridColDef,
-    GridValueGetterParams,
-    GridRowId,
-    GridRowModel,
-    GridToolbarContainer,
-    useGridApiContext,
-    GridValueFormatterParams,
-    GridRenderCellParams,
-    GridCellModesModel } from '@mui/x-data-grid';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Avatar from '@mui/material/Avatar';
-import Typography from '@mui/material/Typography';
+    GridRenderCellParams } from '@mui/x-data-grid';
 
 import IEvent, {
     toDateString,
@@ -47,11 +35,12 @@ import IEvent, {
     dateToTimestamp,
     toLocalDateString } from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
-import ResourceDialog, {ResourceDialogProps} from "./ResourceDialog";
+import ResourceDialog from "./ResourceDialog";
 
 import Resource, { colorMap } from "../lib/resource-utils"
 
 import Header, {TabLabel} from "./Header"
+import ResourceTable from "./ResourceTable";
 
 type TabContextType = {
     tab: TabLabel;
@@ -65,7 +54,23 @@ const defaultTabContext: TabContextType = {
 
 export const CurrentTabContext = createContext(defaultTabContext);
 
-//type TabLabel = "Resource" | "Calendar" | "Reservation"
+type ResourceContextType = {
+    events: IEvent[];
+    resources: Resource[];
+    setResourceAdding: (s: boolean) => void;
+    setResourceSynced: (s: boolean) => void;
+    setError: (s: string|null) => void;
+}
+
+const defaultResourceContext: ResourceContextType = {
+    events: [],
+    resources: [],
+    setResourceAdding: (s: boolean) => {},
+    setResourceSynced: (s: boolean) => {},
+    setError: (s: string|null) => {}
+}
+
+export const CurrentResourceContext = createContext(defaultResourceContext);
 
 const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
@@ -77,9 +82,15 @@ const Home = ({ user }: { user: User }) => {
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
     const [tab, setTab] = useState<TabLabel>("Calendar");
     const currentTabContext = {tab, setTab};
+    const currentResourceContext = {
+        events,
+        resources,
+        setResourceAdding,
+        setResourceSynced,
+        setError
+    };
 
     interface IResults {
         access_token: string;
@@ -246,7 +257,6 @@ const Home = ({ user }: { user: User }) => {
         } 
     }
 
-
     // Resources
     const fetchResources = async () => {
         let { data: resources, error } = await supabase
@@ -284,7 +294,7 @@ const Home = ({ user }: { user: User }) => {
                 setError(null);
             }
         } else {
-            let { data: event, error } = await supabase
+            let { data: resource, error } = await supabase
                 .from("resources")
                 .insert({
                     id: r.id,
@@ -368,51 +378,6 @@ const Home = ({ user }: { user: User }) => {
     }
 
     // ResourceTable
-    function ResourceTableToolBar() {
-        const apiRef = useGridApiContext();
-      
-        const deleteResourceSelected = () => {
-            //apiRef.current.setPage(1);
-            const selectedRows: Map<GridRowId, GridRowModel> = apiRef.current.getSelectedRows();
-            const iter = selectedRows.entries()
-            let ent = iter.next();
-            while (!ent.done) {
-                const resource = ent.value[1];
-                if (window.confirm(`Are you sure to delete '${resource.name}'`)){
-                    deleteResource(resource.id)
-                }
-                ent = iter.next();
-            }
-        }
-      
-        return (
-          <GridToolbarContainer 
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                }}>
-            <Button size='small' onClick={deleteResourceSelected}>Delete</Button>
-            <Button size='small' onClick={handleResourceAdd}>Add</Button>
-          </GridToolbarContainer>
-        );
-    }
-
-    const handleResourceAdd = () => {
-        setResourceAdding(true);
-    }
-
-    const deleteResource = async (id: string|undefined) => {
-        if (id) {
-            let res = await supabase
-                .from("resources")
-                .delete()
-                .eq('id', id)
-            setResourceSynced(false);
-            setError(null);
-        } 
-    }
-
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource")
         setResourceAdding(false);
@@ -420,47 +385,7 @@ const Home = ({ user }: { user: User }) => {
             addResource(resource)
     }
 
-    const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
-        return <>
-                <Avatar sx={{
-                        bgcolor: colorMap.get(params.value!.display_color),
-                        width: 24, height: 24
-                    }}>
-                    {params.value!.name[0]}
-                </Avatar>
-                <Typography sx={{padding: 1}}>
-                    {params.value!.name}
-                </Typography>
-            </>
-    }
-    const resourceTableColumns: GridColDef[] = [
-        {
-            field: 'this',
-            headerName: 'Name',
-            width: 200,
-            editable: false,
-            renderCell: resourceAvatar
-        },
-        {
-            field: 'type',
-            headerName: 'Type',
-            width: 100,
-            editable: false,
-        },
-        {
-            field: 'generation',
-            headerName: 'Generation',
-            width: 100,
-            editable: false,
-        },
-        {
-            field: 'note',
-            headerName: 'Note',
-            width: 300,
-            editable: false,
-        },
-    ]
-
+    // EventTable
     const renderDateString = (params: GridRenderCellParams<number>) => {
         if (params.value === undefined) 
             return '-'
@@ -468,7 +393,6 @@ const Home = ({ user }: { user: User }) => {
             return toLocalDateString(params.value)
     }
 
-    // EventTable
     const eventTableColumns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 90 },
         {
@@ -528,46 +452,9 @@ const Home = ({ user }: { user: User }) => {
             <CurrentTabContext.Provider value={currentTabContext}>
                 <Header/>
             </CurrentTabContext.Provider>
-            <Stack spacing={10}>
-                <div  hidden={false} className={"flex m-4 justify-center"} >
-                    <h1> Ressorce </h1>
-                    <FullCalendar
-                        height={200}
-                        plugins={[listPlugin]}
-                        initialView="listDay"
-                        headerToolbar={{
-                            left: 'title',
-                            center: '',
-                            right: '',
-                        }}
-                        locales={[jaLocale]}
-                        locale='ja'
-                        businessHours={businessHours}
-                        timeZone='local'
-                        events={events as []}
-                    />
-                </div>
-                <div className={"flex m-4 justify-center"}>
-                    <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
-                    <Box sx={{width: '100%'}}>
-                        <DataGrid
-                            rows={resources.map((r) => {return {...r, "this": r}})}
-                            columns={resourceTableColumns}
-                            rowsPerPageOptions={[5,10,20,50]}
-                            pageSize={resourceTablePageSize}
-                            onPageSizeChange={(newPageSize) => setResourceTablePageSize(newPageSize)}
-                            pagination
-                            autoHeight
-                            checkboxSelection
-                            components={{Toolbar: ResourceTableToolBar}}
-                            disableSelectionOnClick
-                            // experimentalFeatures={{ newEditingApi: true }}
-                            onCellDoubleClick={handleDubleClickOnTable}
-                        />
-                    </Box>
-                    </Container>
-                </div>
-            </Stack>
+            <CurrentResourceContext.Provider value={currentResourceContext}>
+                <ResourceTable/>
+            </CurrentResourceContext.Provider>
         </div>
         ): tab === 'Calendar' ?(
         <div className={"supabase-calendar-main"}>
