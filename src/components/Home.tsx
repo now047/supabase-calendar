@@ -23,11 +23,15 @@ import listPlugin from '@fullcalendar/list';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import LinearProgress from '@mui/material/LinearProgress';
 import {
     DataGrid,
     GridColDef,
     GridRenderCellParams } from '@mui/x-data-grid';
+import { Collapse } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import {IconButton} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close"
+import { Button } from "@mui/material";
 
 import IEvent, {
     toDateString,
@@ -48,11 +52,15 @@ import Calendar, { DBEventToIEvent } from "./Calendar";
 type TabContextType = {
     tab: TabLabel;
     setTab: (t: TabLabel) => void;
+    errorText: string|null;
+    setError: (e: string|null) => void;
 };
 
 const defaultTabContext: TabContextType = {
     tab: "Calendar",
-    setTab: (t: TabLabel) => {}
+    setTab: (t: TabLabel) => {},
+    errorText: "",
+    setError: (s: string|null) => {}
 };
 
 export const CurrentTabContext = createContext(defaultTabContext);
@@ -108,7 +116,12 @@ const Home = ({ user }: { user: User }) => {
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
     const [tab, setTab] = useState<TabLabel>("Calendar");
-    const currentTabContext = {tab, setTab};
+    const currentTabContext = {
+        tab,
+        setTab,
+        errorText,
+        setError
+    };
     const currentResourceContext = {
         events,
         resources,
@@ -351,13 +364,6 @@ const Home = ({ user }: { user: User }) => {
                     />
                 </Box>
                 </Container>
-            </div>
-            <div className={"flex flex-col flex-grow p-4"} style={{ height: "calc(100vh - 11.5rem)" }} >
-                {!!errorText && (
-                    <div className={ "border max-w-sm self-center px-4 py-2 mt-4 text-center text-sm bg-red-100 border-red-300 text-red-400" } >
-                        {errorText}
-                    </div>
-                )}
             </div>
         </div>
     ): (
