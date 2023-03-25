@@ -1,51 +1,17 @@
 import type { User } from "@supabase/supabase-js";
 import React from "react";
-import { useEffect, useState, useRef, createContext } from "react";
+import { useEffect, useState, createContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
-import FullCalendar from '@fullcalendar/react';
-import interactionPlugin, { 
-    DateClickArg,
-    EventDragStopArg,
-    EventDragStartArg
-} from "@fullcalendar/interaction" // needed for dayClick
-import dayjs from 'dayjs';
-import {
-    EventContentArg,
-    EventSourceInput,
-    EventClickArg,
-    DateSelectArg,
-    EventApi,
-} from '@fullcalendar/core'
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-import jaLocale from '@fullcalendar/core/locales/ja';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import {
-    DataGrid,
-    GridColDef,
-    GridRenderCellParams } from '@mui/x-data-grid';
-import { Collapse } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import {IconButton} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"
-import { Button } from "@mui/material";
 
-import IEvent, {
-    toDateString,
-    strToTimestamp,
-    dateToTimestamp,
-    toLocalDateString } from "../lib/event-utils"
+import IEvent from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
-
-import Resource, { colorMap } from "../lib/resource-utils"
-
+import Resource from "../lib/resource-utils"
 import Header, {TabLabel} from "./Header"
 import ResourceTable from "./ResourceTable";
 import Calendar, { DBEventToIEvent } from "./Calendar";
+import ReservationTable from "./ReservationTable";
 
 
 // Context
@@ -111,7 +77,6 @@ const Home = ({ user }: { user: User }) => {
     const [resources, setResources] = useState<Resource[]>([]);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
-    const newTaskTextRef = useRef<HTMLInputElement>(null);
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
@@ -256,52 +221,12 @@ const Home = ({ user }: { user: User }) => {
         }
     }
 
-    // ResourceTable
-    const handleDubleClickOnTable = () => {
-        console.log('handleDubleClickOnTable')
-
-    }
-
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource")
         setResourceAdding(false);
         if (resource !== null)
             addResource(resource)
     }
-
-    // EventTable
-    const renderDateString = (params: GridRenderCellParams<number>) => {
-        if (params.value === undefined) 
-            return '-'
-        else
-            return toLocalDateString(params.value)
-    }
-
-    const eventTableColumns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 90 },
-        {
-            field: 'title',
-            headerName: 'Title',
-            width: 300,
-            editable: false,
-        },
-        {
-            field: 'start',
-            headerName: 'Start date',
-            type: 'string',
-            width: 200,
-            editable: false,
-            renderCell: renderDateString
-        },
-        {
-            field: 'end',
-            headerName: 'End date',
-            type: 'string',
-            width: 180,
-            editable: false,
-            renderCell: renderDateString
-        }
-    ];
 
     // render
     return recoveryToken ? (
@@ -348,23 +273,7 @@ const Home = ({ user }: { user: User }) => {
             <CurrentTabContext.Provider value={currentTabContext}>
                 <Header/>
             </CurrentTabContext.Provider>
-            <div className={"flex m-4 justify-center"}>
-                <h1> Reservation </h1>
-                <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
-                <Box sx={{height: 400, width: '100%'}}>
-                    <DataGrid
-                        rows={events}
-                        columns={eventTableColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        checkboxSelection
-                        disableSelectionOnClick
-                        experimentalFeatures={{ newEditingApi: true }}
-                        onCellDoubleClick={handleDubleClickOnTable}
-                    />
-                </Box>
-                </Container>
-            </div>
+            <ReservationTable events={events} />
         </div>
     ): (
         <>{handleLogout()}</>
