@@ -51,7 +51,21 @@ import ResourceDialog, {ResourceDialogProps} from "./ResourceDialog";
 
 import Resource, { colorMap } from "../lib/resource-utils"
 
-//export const ResourceContext = createContext([]);
+import Header, {TabLabel} from "./Header"
+
+type TabContextType = {
+    tab: TabLabel;
+    setTab: (t: TabLabel) => void;
+};
+
+const defaultTabContext: TabContextType = {
+    tab: "Calendar",
+    setTab: (t: TabLabel) => {}
+};
+
+export const CurrentTabContext = createContext(defaultTabContext);
+
+//type TabLabel = "Resource" | "Calendar" | "Reservation"
 
 const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
@@ -64,6 +78,9 @@ const Home = ({ user }: { user: User }) => {
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
     const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
+    const [tab, setTab] = useState<TabLabel>("Calendar");
+    const currentTabContext = {tab, setTab};
+
     interface IResults {
         access_token: string;
         refresh_token: string;
@@ -506,16 +523,14 @@ const Home = ({ user }: { user: User }) => {
                     onClose: handleResourceDialogClose
                 }} />
         </div>
-    ) : (
+    ) : tab === 'Resource' ?(
         <div className={"supabase-calendar-main"}>
-            <header>
-                <Stack paddingBottom={8} spacing={2} direction="row">
-                    <Button onClick={handleLogout} variant="text">Logout</Button>
-                </Stack>
-            </header>
+            <CurrentTabContext.Provider value={currentTabContext}>
+                <Header/>
+            </CurrentTabContext.Provider>
             <Stack spacing={10}>
-                <div className={"flex m-4 justify-center"} >
-                    <h1> Ressorces </h1>
+                <div  hidden={false} className={"flex m-4 justify-center"} >
+                    <h1> Ressorce </h1>
                     <FullCalendar
                         height={200}
                         plugins={[listPlugin]}
@@ -552,67 +567,79 @@ const Home = ({ user }: { user: User }) => {
                     </Box>
                     </Container>
                 </div>
-                <div className={"flex m-4 justify-center"}>
-                    <h1>Calendar</h1>
-                    <Box sx={{display: 'flex', justifyContent: 'center', height: 10}}>
-                        { (!eventSynced) ? ( <LinearProgress sx={{ width: '50%'}}/>):
-                        <></>}
-                    </Box>
-                    <FullCalendar
-                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        locales={[jaLocale]}
-                        locale='ja'
-                        businessHours={businessHours}
-                        nowIndicator={true}
-                        headerToolbar={{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay',
-                        }}
-                        timeZone='local'
-                        editable={true}
-                        navLinks={true}
-                        dateClick={handleDateClick}
-                        eventClick={handleEventClick}
-                        eventsSet={handleUpdatedEvents} 
-                        //eventDragStart={handleDragStart}
-                        //eventDragStop={handleDragStop}
-                        eventDurationEditable={true}
-                        eventResizableFromStart={false}
-                        selectable={true}
-                        select={handleDateSelect}
-                        events={events as []}
-                       /*  events={events.map((e) => {
-                            return {
-                                'start': e.start,
-                                'end': e.end,
-                                'color': e.color,
-                                'id': e.id,
-                                'title': e.title,
-                                'startEditable':true,
-                                'durationEditable': true}
-                        }) as []} */
-                    />
-                </div>
-                <div className={"flex m-4 justify-center"}>
-                    <h1> Reservations </h1>
-                    <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
-                    <Box sx={{height: 400, width: '100%'}}>
-                        <DataGrid
-                            rows={events}
-                            columns={eventTableColumns}
-                            pageSize={5}
-                            rowsPerPageOptions={[5]}
-                            checkboxSelection
-                            disableSelectionOnClick
-                            experimentalFeatures={{ newEditingApi: true }}
-                            onCellDoubleClick={handleDubleClickOnTable}
-                        />
-                    </Box>
-                    </Container>
-                </div>
             </Stack>
+        </div>
+        ): tab === 'Calendar' ?(
+        <div className={"supabase-calendar-main"}>
+            <CurrentTabContext.Provider value={currentTabContext}>
+                <Header/>
+            </CurrentTabContext.Provider>
+            <div className={"flex m-4 justify-center"}>
+                <h1>Calendar</h1>
+                <Box sx={{display: 'flex', justifyContent: 'center', height: 10}}>
+                    { (!eventSynced) ? ( <LinearProgress sx={{ width: '50%'}}/>):
+                    <></>}
+                </Box>
+                <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    locales={[jaLocale]}
+                    locale='ja'
+                    businessHours={businessHours}
+                    nowIndicator={true}
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                    }}
+                    timeZone='local'
+                    editable={true}
+                    navLinks={true}
+                    dateClick={handleDateClick}
+                    eventClick={handleEventClick}
+                    eventsSet={handleUpdatedEvents} 
+                    //eventDragStart={handleDragStart}
+                    //eventDragStop={handleDragStop}
+                    eventDurationEditable={true}
+                    eventResizableFromStart={false}
+                    selectable={true}
+                    select={handleDateSelect}
+                    events={events as []}
+                    /*  events={events.map((e) => {
+                        return {
+                            'start': e.start,
+                            'end': e.end,
+                            'color': e.color,
+                            'id': e.id,
+                            'title': e.title,
+                            'startEditable':true,
+                            'durationEditable': true}
+                    }) as []} */
+                />
+            </div>
+        </div>
+        ): tab === 'Reservation' ?(
+        <div className={"supabase-calendar-main"}>
+            <CurrentTabContext.Provider value={currentTabContext}>
+                <Header/>
+            </CurrentTabContext.Provider>
+            <div className={"flex m-4 justify-center"}>
+                <h1> Reservation </h1>
+                <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
+                <Box sx={{height: 400, width: '100%'}}>
+                    <DataGrid
+                        rows={events}
+                        columns={eventTableColumns}
+                        pageSize={5}
+                        rowsPerPageOptions={[5]}
+                        checkboxSelection
+                        disableSelectionOnClick
+                        experimentalFeatures={{ newEditingApi: true }}
+                        onCellDoubleClick={handleDubleClickOnTable}
+                    />
+                </Box>
+                </Container>
+            </div>
             <div className={"flex flex-col flex-grow p-4"} style={{ height: "calc(100vh - 11.5rem)" }} >
                 {!!errorText && (
                     <div className={ "border max-w-sm self-center px-4 py-2 mt-4 text-center text-sm bg-red-100 border-red-300 text-red-400" } >
@@ -621,7 +648,9 @@ const Home = ({ user }: { user: User }) => {
                 )}
             </div>
         </div>
-    );
+    ): (
+        <></>
+    )
 };
 
 export default Home;
