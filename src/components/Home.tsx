@@ -17,11 +17,13 @@ import {
     DateSelectArg,
     EventApi,
 } from '@fullcalendar/core'
-
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import LinearProgress from '@mui/material/LinearProgress';
 import {
     DataGrid,
     GridColDef,
@@ -61,6 +63,7 @@ const Home = ({ user }: { user: User }) => {
     const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
+    const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
     interface IResults {
         access_token: string;
         refresh_token: string;
@@ -111,6 +114,13 @@ const Home = ({ user }: { user: User }) => {
 
 
     // Events
+    const DBEventToIEvent = (db_event: any) => {
+            return {...db_event,
+                start: strToTimestamp(db_event.start),
+                end: strToTimestamp(db_event.end)
+            } as IEvent;
+    }
+
     const fetchEvents = async () => {
         let { data: events, error } = await supabase
             .from("events")
@@ -119,13 +129,13 @@ const Home = ({ user }: { user: User }) => {
         if (error) console.log("error", error);
         else {
             console.log("Events: ", events);
-            setEvents(events?.map((e) => {return {...e, start: strToTimestamp(e.start), end: strToTimestamp(e.end)}}) as IEvent[]);
+            setEvents(events?.map((e) => DBEventToIEvent(e)) as IEvent[]);
             setEventSynced(true)
         }
     };
 
-    const addEvent = async (e: IEvent) => {
-        console.log("addEvent:", e);
+    const syncEvent = async (e: IEvent) => {
+        console.log("syncEvent:", e);
         if (e.id) {
             let { data: event, error } = await supabase
                 .from("events")
@@ -141,7 +151,7 @@ const Home = ({ user }: { user: User }) => {
             if (error) setError(error.message);
             else {
                 setEventSynced(false);
-                console.log('Updated event:', events)
+                console.log('Synced event:', DBEventToIEvent(event))
                 setError(null);
             }
         } else {
@@ -159,6 +169,7 @@ const Home = ({ user }: { user: User }) => {
             if (error) setError(error.message);
             else {
                 setEventSynced(false);
+                setEvents([...events, DBEventToIEvent(event)])
                 setError(null);
             }
         }
@@ -173,11 +184,11 @@ const Home = ({ user }: { user: User }) => {
     }
 
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
-        console.log("Update notified.")
+        let is_changed = false;
         events.map(e => {
-            let ie = updated_events.find((ie, i, l) => { return Number(ie.id) == e.id })
+            let ie = updated_events.find((ie, i, api) => { return Number(ie.id) == e.id })
             if (ie !== undefined && eventDiffers(e, ie)) {
-                const updated: IEvent = {
+                e = {
                     start: dateToTimestamp(ie.start!),
                     end: dateToTimestamp(ie.end!),
                     title: ie.title,
@@ -185,17 +196,21 @@ const Home = ({ user }: { user: User }) => {
                     id: e.id,
                     resource_id: e.resource_id
                 }
-                console.log('event changed:', updated)
-                addEvent(updated)
+                console.log('Update event:', e)
+                is_changed = true;
+                syncEvent(e);
             }
             return e;
         })
+        if (!is_changed){
+            console.log("Update notified. nothing changed")
+        }
     }
 
     const modifyEvent = (event: IEvent|null) => {
         setReservationInfo(null);
         if (event !== null){
-            addEvent(event);
+            syncEvent(event);
         }
     }
 
@@ -223,7 +238,7 @@ const Home = ({ user }: { user: User }) => {
             .order("id", { ascending: false });
         if (error) console.log("error", error);
         else {
-            console.log("Resources: ", events);
+            console.log("Resources: ", resources);
             setResources(resources as Resource[]);
             setResourceSynced(true);
         }
@@ -496,18 +511,38 @@ const Home = ({ user }: { user: User }) => {
             <header>
                 <Stack paddingBottom={8} spacing={2} direction="row">
                     <Button onClick={handleLogout} variant="text">Logout</Button>
-                    <Button variant="contained">Contained</Button>
-                    <Button variant="outlined">Outlined</Button>
                 </Stack>
             </header>
             <Stack spacing={10}>
+                <div className={"flex m-4 justify-center"} >
+                    <h1> Ressorces </h1>
+                    <FullCalendar
+                        height={200}
+                        plugins={[listPlugin]}
+                        initialView="listDay"
+                        headerToolbar={{
+                            left: 'title',
+                            center: '',
+                            right: '',
+                        }}
+                        locales={[jaLocale]}
+                        locale='ja'
+                        businessHours={businessHours}
+                        timeZone='local'
+                        events={events as []}
+                    />
+                </div>
                 <div className={"flex m-4 justify-center"}>
-                    <Box sx={{height: 300, width: '100%'}}>
-                        <h2> Ressorces </h2>
+                    <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
+                    <Box sx={{width: '100%'}}>
                         <DataGrid
                             rows={resources.map((r) => {return {...r, "this": r}})}
                             columns={resourceTableColumns}
-                            rowsPerPageOptions={[5]}
+                            rowsPerPageOptions={[5,10,20,50]}
+                            pageSize={resourceTablePageSize}
+                            onPageSizeChange={(newPageSize) => setResourceTablePageSize(newPageSize)}
+                            pagination
+                            autoHeight
                             checkboxSelection
                             components={{Toolbar: ResourceTableToolBar}}
                             disableSelectionOnClick
@@ -515,9 +550,14 @@ const Home = ({ user }: { user: User }) => {
                             onCellDoubleClick={handleDubleClickOnTable}
                         />
                     </Box>
+                    </Container>
                 </div>
                 <div className={"flex m-4 justify-center"}>
-                    <h2>Calendar</h2>
+                    <h1>Calendar</h1>
+                    <Box sx={{display: 'flex', justifyContent: 'center', height: 10}}>
+                        { (!eventSynced) ? ( <LinearProgress sx={{ width: '50%'}}/>):
+                        <></>}
+                    </Box>
                     <FullCalendar
                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                         initialView="dayGridMonth"
@@ -542,8 +582,8 @@ const Home = ({ user }: { user: User }) => {
                         eventResizableFromStart={false}
                         selectable={true}
                         select={handleDateSelect}
-                        //events={events as []}
-                        events={events.map((e) => {
+                        events={events as []}
+                       /*  events={events.map((e) => {
                             return {
                                 'start': e.start,
                                 'end': e.end,
@@ -552,12 +592,13 @@ const Home = ({ user }: { user: User }) => {
                                 'title': e.title,
                                 'startEditable':true,
                                 'durationEditable': true}
-                        }) as []}
+                        }) as []} */
                     />
                 </div>
                 <div className={"flex m-4 justify-center"}>
+                    <h1> Reservations </h1>
+                    <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
                     <Box sx={{height: 400, width: '100%'}}>
-                        <h2> Reservations </h2>
                         <DataGrid
                             rows={events}
                             columns={eventTableColumns}
@@ -569,6 +610,7 @@ const Home = ({ user }: { user: User }) => {
                             onCellDoubleClick={handleDubleClickOnTable}
                         />
                     </Box>
+                    </Container>
                 </div>
             </Stack>
             <div className={"flex flex-col flex-grow p-4"} style={{ height: "calc(100vh - 11.5rem)" }} >
