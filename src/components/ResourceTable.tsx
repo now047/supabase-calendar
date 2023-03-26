@@ -10,19 +10,25 @@ import {
 } from "@mui/x-data-grid";
 import { supabase } from "../lib/api";
 
-import { CurrentResourceContext } from "./Home";
+import { EventContext, HeaderContext } from "../App";
+import { ResourceContext } from "../App";
 import Resource, { colorMap } from "../lib/resource-utils";
 
-const ResourceTable = () => {
+const ResourceTable = (props: {
+        setResourceAdding: (b: boolean) => void
+        setResourceSynced: (b: boolean) => void}) => {
     const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
+    const {tab, setTab, errorText, setError} = useContext(HeaderContext)
+
+    const {
+        resources,
+        setResources
+    } = useContext(ResourceContext);
 
     const {
         events,
-        resources,
-        setResourceAdding,
-        setResourceSynced,
-        setError
-    } = useContext(CurrentResourceContext);
+        setEvents
+    } = useContext(EventContext);
 
     const businessHours = {
         daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday 
@@ -74,7 +80,7 @@ const ResourceTable = () => {
 
 
     const handleResourceAdd = () => {
-        setResourceAdding(true);
+        props.setResourceAdding(true);
     };
 
     function ResourceTableToolBar() {
@@ -112,7 +118,7 @@ const ResourceTable = () => {
                 .from("resources")
                 .delete()
                 .eq('id', id)
-            setResourceSynced(false);
+            props.setResourceSynced(false);
             setError(null);
         }
     };

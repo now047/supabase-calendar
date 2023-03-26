@@ -1,6 +1,8 @@
 import React, {useContext} from "react";
 
 import { Box, LinearProgress  } from "@mui/material";
+import {Backdrop} from "@mui/material";
+import {CircularProgress} from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -9,28 +11,30 @@ import interactionPlugin, {
     EventDragStopArg,
     EventDragStartArg
 } from "@fullcalendar/interaction" // needed for dayClick
+import { EventClickArg, EventApi, DateSelectArg,
+        EventContentArg, EventSourceInput } from "@fullcalendar/core";
 import jaLocale from '@fullcalendar/core/locales/ja';
 import dayjs from "dayjs";
-import { EventClickArg, EventApi, DateSelectArg } from "@fullcalendar/core";
 
 import { supabase } from "../lib/api";
 import IEvent, { dateToTimestamp, toDateString, strToTimestamp } from "../lib/event-utils";
 import { colorMap, getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
-import { CurrentEventContext } from "./Home";
-import { EventContentArg } from "@fullcalendar/core";
-import { EventSourceInput } from "@fullcalendar/core";
-
-const Calendar = () => {
+import { EventContext, HeaderContext, ResourceContext } from "../App";
+const Calendar = (props: {
+        eventSynced: boolean,
+        setReservationInfo: (info: ReserveDialogProps|null) => void,
+        setEventSynced: (b: boolean) => void
+    }) => {
+    const {user, tab, setTab, errorText, setError} = useContext(HeaderContext)
     const {
-        user,
         events,
+        setEvents
+    } = useContext(EventContext);
+    const {
         resources,
-        eventSynced,
-        setEvents,
-        setReservationInfo,
-        setEventSynced,
-        setError} = useContext(CurrentEventContext);
+        setResources
+    } = useContext(ResourceContext);
 
     const businessHours =  {
         daysOfWeek: [ 1, 2, 3, 4, 5 ], // Monday - Friday 
@@ -69,11 +73,12 @@ const Calendar = () => {
                 .single();
             if (error) setError(error.message);
             else {
-                setEventSynced(false);
+                props.setEventSynced(false);
                 console.log('Synced event:', DBEventToIEvent(event))
                 setError(null);
             }
         } else {
+            console.log("syncEvent user", user)
             let { data: event, error } = await supabase
                 .from("events")
                 .insert({
@@ -87,7 +92,7 @@ const Calendar = () => {
                 .single();
             if (error) setError(error.message);
             else {
-                setEventSynced(false);
+                props.setEventSynced(false);
                 setEvents([...events, DBEventToIEvent(event)])
                 setError(null);
             }
@@ -95,7 +100,7 @@ const Calendar = () => {
     };
 
     const modifyEvent = (event: IEvent|null) => {
-        setReservationInfo(null);
+        props.setReservationInfo(null);
         if (event !== null){
             syncEvent(event);
         }
@@ -103,14 +108,14 @@ const Calendar = () => {
 
     const deleteEvent = async (id: string|undefined, title: string|undefined) => {
         console.log("deleteEvent:", title);
-        setReservationInfo(null);
+        props.setReservationInfo(null);
         if (title && id) {
             if (window.confirm(`Are you sure you want to delete the event '${title}'`)) {
                 let res = await supabase
                     .from("events")
                     .delete()
                     .eq('id', id)
-                setEventSynced(false);
+                props.setEventSynced(false);
                 setError(null);
             }
         } 
@@ -132,7 +137,7 @@ const Calendar = () => {
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
-        setReservationInfo(info);
+        props.setReservationInfo(info);
     };
 
     const handleDragStart = (event:EventDragStartArg) => {
@@ -206,7 +211,7 @@ const Calendar = () => {
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
-        setReservationInfo(info);
+        props.setReservationInfo(info);
     };
 
     const renderEventContent = (eventInfo: EventContentArg) => {
@@ -224,10 +229,16 @@ const Calendar = () => {
     return (
         <div className={"flex m-4 justify-center"}>
             <h1>Calendar</h1>
-            <Box sx={{ display: 'flex', justifyContent: 'center', height: 10 }}>
-                {(!eventSynced) ? (<LinearProgress sx={{ width: '50%' }} />) :
+            {/* <Box sx={{ display: 'flex', justifyContent: 'center', height: 10 }}>
+                {(!props.eventSynced) ? (<LinearProgress sx={{ width: '50%' }} />) :
                     <></>}
-            </Box>
+            </Box> */}
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={!props.eventSynced}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
             <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"

@@ -54,6 +54,9 @@ b { /* used for event dates/times */
   padding: 2em;
 }
 
+.supabase-calendar-sidebar-table{
+  padding: 0em;
+}
 .supabase-calendar-main {
   flex-grow: 1;
   padding: 3em;

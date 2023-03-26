@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import React from "react";
-import { useEffect, useState, createContext } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
@@ -8,103 +8,23 @@ import IEvent from "../lib/event-utils"
 import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
 import Resource from "../lib/resource-utils"
-import Header, {TabLabel} from "./Header"
+import Header from "./Header"
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
 import { getResourceName } from "../lib/resource-utils";
 import { strToTimestamp } from "../lib/event-utils";
-
-// Context
-type TabContextType = {
-    tab: TabLabel;
-    setTab: (t: TabLabel) => void;
-    errorText: string|null;
-    setError: (e: string|null) => void;
-};
-
-const defaultTabContext: TabContextType = {
-    tab: "Calendar",
-    setTab: (t: TabLabel) => {},
-    errorText: "",
-    setError: (s: string|null) => {}
-};
-
-export const CurrentTabContext = createContext(defaultTabContext);
-
-type ResourceContextType = {
-    events: IEvent[];
-    resources: Resource[];
-    setResourceAdding: (s: boolean) => void;
-    setResourceSynced: (s: boolean) => void;
-    setError: (s: string|null) => void;
-}
-
-const defaultResourceContext: ResourceContextType = {
-    events: [],
-    resources: [],
-    setResourceAdding: (s: boolean) => {},
-    setResourceSynced: (s: boolean) => {},
-    setError: (s: string|null) => {}
-}
-
-type EventContextType = {
-        user: User | null;
-        events: IEvent[];
-        resources: Resource[];
-        eventSynced: boolean;
-        setEvents: (s: IEvent[]) => void;
-        setReservationInfo: (s: ReserveDialogProps|null) => void;
-        setEventSynced: (s: boolean) => void;
-        setError: (s: string|null) => void;
-};
-export const CurrentResourceContext = createContext(defaultResourceContext);
-
-const defaultEventContext: EventContextType = {
-    user: null,
-    events: [],
-    resources: [],
-    eventSynced: false,
-    setEvents: (s: IEvent[]) => {},
-    setReservationInfo: (s: ReserveDialogProps|null) => {},
-    setEventSynced: (s: boolean) => {},
-    setError: (s: string|null) => {}
-}
-export const CurrentEventContext = createContext(defaultEventContext);
+import { EventContext, HeaderContext, ResourceContext } from "../App";
 
 const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
-    const [events, setEvents] = useState<IEvent[]>([]);
-    const [resources, setResources] = useState<Resource[]>([]);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
-    const [errorText, setError] = useState<string | null>("");
     const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const [tab, setTab] = useState<TabLabel>("Calendar");
-    const currentTabContext = {
-        tab,
-        setTab,
-        errorText,
-        setError
-    };
-    const currentResourceContext = {
-        events,
-        resources,
-        setResourceAdding,
-        setResourceSynced,
-        setError
-    };
-    const currentEventContext = {
-        user,
-        events,
-        resources,
-        eventSynced,
-        setEvents,
-        setReservationInfo,
-        setEventSynced,
-        setError
-    };
+    const {tab, setTab, errorText, setError} = useContext(HeaderContext);
+    const {events, setEvents} = useContext(EventContext);
+    const {resources, setResources} = useContext(ResourceContext);;
 
     interface IResults {
         access_token: string;
@@ -266,27 +186,22 @@ const Home = ({ user }: { user: User }) => {
         </div>
     ) : tab === 'Resource' ?(
         <div className={"supabase-calendar-main"}>
-            <CurrentTabContext.Provider value={currentTabContext}>
-                <Header/>
-            </CurrentTabContext.Provider>
-            <CurrentResourceContext.Provider value={currentResourceContext}>
-                <ResourceTable/>
-            </CurrentResourceContext.Provider>
+            <Header/>
+            <ResourceTable
+                setResourceAdding={setResourceAdding}
+                setResourceSynced={setResourceSynced}/>
         </div>
         ): tab === 'Calendar' ?(
         <div className={"supabase-calendar-main"}>
-            <CurrentTabContext.Provider value={currentTabContext}>
-                <Header/>
-            </CurrentTabContext.Provider>
-            <CurrentEventContext.Provider value={currentEventContext}>
-                <Calendar/>
-            </CurrentEventContext.Provider>
+            <Header/>
+            <Calendar
+                eventSynced={eventSynced}
+                setReservationInfo={setReservationInfo}
+                setEventSynced={setEventSynced}/>
         </div>
         ): tab === 'Reservation' ?(
         <div className={"supabase-calendar-main"}>
-            <CurrentTabContext.Provider value={currentTabContext}>
-                <Header/>
-            </CurrentTabContext.Provider>
+            <Header/>
             <ReservationTable events={events.map((e) => {
                 return {...e, resource_name: getResourceName(e.resource_id, resources)}})} />
         </div>

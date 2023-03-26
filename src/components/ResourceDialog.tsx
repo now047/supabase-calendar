@@ -1,5 +1,5 @@
 import * as React from 'react';
-import dayjs, {Dayjs} from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
@@ -43,196 +43,195 @@ import Resource, { colorMap } from "../lib/resource-utils"
 
 
 export interface ResourceDialogProps {
-    id?: string,
-    name: string,
-    type: string,
-    generation: string,
-    note?: string,
-    resources: Resource[],
-    resource_id?: number,
-    open: boolean,
-    onClose: (resource: Resource|null) => void,
+  id?: string,
+  name: string,
+  type: string,
+  generation: string,
+  note?: string,
+  resources: Resource[],
+  resource_id?: number,
+  open: boolean,
+  onClose: (resource: Resource | null) => void,
 }
 
 const ReserveDialog = (props: ResourceDialogProps) => {
-    const [name, setName] = React.useState(props.name);
-    const [nameError, setNameError] = React.useState(false);
-    const [type, setType] = React.useState(props.type);
-    const [generation, setGeneration] = React.useState(props.generation);
-    const [note, setNote] = React.useState(props.note);
-    const [color, setColor] = React.useState(1);
+  const [name, setName] = React.useState(props.name);
+  const [nameError, setNameError] = React.useState(false);
+  const [type, setType] = React.useState(props.type);
+  const [generation, setGeneration] = React.useState(props.generation);
+  const [note, setNote] = React.useState(props.note);
+  const [color, setColor] = React.useState(1);
 
-    const resourceTypes = [
-        'Grid',
-        'Single',
-        'Mini'
-    ]
+  const resourceTypes = [
+    'Grid',
+    'Single',
+    'Mini'
+  ]
 
-    const resourceGenerations = [
-        '3',
-        '4',
-        '5',
-        '5.5',
-        '6'
-    ]
+  const resourceGenerations = [
+    '3',
+    '4',
+    '5',
+    '5.5',
+    '6'
+  ]
 
-    const handleClose = (cancel: boolean) => {
-        if (!cancel){
-            if (name === undefined || name === null || name === '' ) {
-                setNameError(true)
-                return
-            }
-            console.log(name, type, generation, note, color)
-            props.onClose({
-                name: name,
-                type: type?? '',
-                generation: generation?? '',
-                note: note?? '',
-                display_color: color,
-            } as Resource);
-        } else {
-            props.onClose(null);
-        }
-    };
-
-    const handleNameChange = (event: any) => {
-        console.log("name change:", event.target.value)
-        setNameError(false)
-        setName(event.target.value)
-    };
-
-    const handleTypeChange = (event: SelectChangeEvent) => {
-        console.log("type change:", event.target)
-        setType(event.target.value)
-    };
-
-    const handleGenerationChange = (event: SelectChangeEvent) => {
-        console.log("generation change:", event.target.value)
-        setGeneration(event.target.value)
-    };
-
-    const handleColorChange = (event: SelectChangeEvent) => {
-        console.log("color change:", event.target.value)
-        setColor(Number(event.target.value))
-    };
-
-    const handleNoteChange = (event: any) => {
-        console.log("note change:", event.target.value)
-        setNote(event.target.value)
-    };
-
-    const colorList = () => {
-        const iter = colorMap.entries();
-        let colKeyValue: [number, string][] = [];
-        let value = iter.next().value;
-        while (value !== undefined){
-            colKeyValue.push(value)
-            value = iter.next().value
-        }
-        return colKeyValue;
+  const handleClose = (cancel: boolean) => {
+    if (!cancel) {
+      if (name === undefined || name === null || name === '') {
+        setNameError(true)
+        return
+      }
+      console.log(name, type, generation, note, color)
+      props.onClose({
+        name: name,
+        type: type ?? '',
+        generation: generation ?? '',
+        note: note ?? '',
+        display_color: color,
+      } as Resource);
+    } else {
+      props.onClose(null);
     }
+  };
 
-    return (
-        <Dialog onClose={handleClose.bind(null, true)} open={props.open}>
-            <DialogTitle>New resource</DialogTitle>
+  const handleNameChange = (event: any) => {
+    console.log("name change:", event.target.value)
+    setNameError(false)
+    setName(event.target.value)
+  };
 
-            <Box sx={{ '& > :not(style)': { m: 2 } }}>
-                <DemoContainer
-                    components={[
-                        'Resource',
-                        'Start',
-                        'End',
-                        'Purpose',
-                        'Delete',
-                    ]}
-                >
-                    <DemoItem component="Name" >
-                        { nameError? 
-                        <TextField error id="resource-name"
-                            label="Name of resource *"
-                            variant="standard"
-                            onChange={handleNameChange} />
-                        :
-                        <TextField id="resource-name"
-                            label="Name of resource *"
-                            variant="standard"
-                            onChange={handleNameChange} />
-                        }
-                    </DemoItem>
-                    <DemoItem component="Type" >
-                        <FormControl fullWidth>
-                            <InputLabel id="resource-type-select-label">Type</InputLabel>
-                            <Select
-                                labelId="resource-type-select-label"
-                                id="resource-type-select"
-                                value={type}
-                                label="resource type"
-                                onChange={handleTypeChange}
-                            >
-                                { resourceTypes.map(r => <MenuItem key={r} value={r}> {r} </MenuItem>) }
-                            </Select>
-                        </FormControl>
-                    </DemoItem>
-                    <DemoItem component="Generation" >
-                        <FormControl fullWidth>
-                            <InputLabel id="resource-generation-select-label">Generation</InputLabel>
-                            <Select
-                                labelId="resource-generation-select-label"
-                                id="resource-generation-select"
-                                value={generation}
-                                label="resource generation"
-                                onChange={handleGenerationChange}
-                            >
-                                { resourceGenerations.map(g => <MenuItem key={g} value={g}> {g} </MenuItem>) }
-                            </Select>
-                        </FormControl>
-                    </DemoItem>
-                    <DemoItem component="Note" >
-                        <TextField id="resource-note"
-                            label="Note for resource"
-                            multiline
-                            rows={4}
-                            helperText="Describe some important note for the resource such as IP address, etc."
-                            variant="standard"
-                            onChange={handleNoteChange}
-                        />
-                    </DemoItem>
-                     <DemoItem component="Color" >
-                        <FormControl>
-                            <InputLabel id="resource-color-select-label">Display color</InputLabel>
-                            <Select
-                                labelId="resource-color-select-label"
-                                id="resource-color-select"
-                                value={color.toString()}
-                                label="resource display color"
-                                onChange={handleColorChange}
-                            > 
-                            {
-                                colorList().map((kv) =>
-                                    <MenuItem key={'color-' + kv[0]} value={kv[0]}>
-                                         <Box sx={{
-                                                width: 100,
-                                                height: 24,
-                                                borderRadius: 1,
-                                                backgroundColor: kv[1],
-                                            }}
-                                        />
-                                    </MenuItem>)
-                            }
-                            </Select>
-                        </FormControl>
-                    </DemoItem>
+  const handleTypeChange = (event: SelectChangeEvent) => {
+    console.log("type change:", event.target)
+    setType(event.target.value)
+  };
 
-                    <DemoItem component='Delete'>
-                    <Stack paddingBottom={2} justifyContent={"space-between"} direction="row">
-                        <Button onClick={handleClose.bind(null, true)} variant="text">Cancel</Button>
-                        <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
-                    </Stack>
-                    </DemoItem>
-                </DemoContainer>
-            </Box>
-        </Dialog>
-    );
+  const handleGenerationChange = (event: SelectChangeEvent) => {
+    console.log("generation change:", event.target.value)
+    setGeneration(event.target.value)
+  };
+
+  const handleColorChange = (event: SelectChangeEvent) => {
+    console.log("color change:", event.target.value)
+    setColor(Number(event.target.value))
+  };
+
+  const handleNoteChange = (event: any) => {
+    console.log("note change:", event.target.value)
+    setNote(event.target.value)
+  };
+
+  const colorList = () => {
+    const iter = colorMap.entries();
+    let colKeyValue: [number, string][] = [];
+    let value = iter.next().value;
+    while (value !== undefined) {
+      colKeyValue.push(value)
+      value = iter.next().value
+    }
+    return colKeyValue;
+  }
+
+  return (
+    <Dialog onClose={handleClose.bind(null, true)} open={props.open}>
+      <DialogTitle>New resource</DialogTitle>
+      <Box sx={{ '& > :not(style)': { m: 2 } }}>
+        <DemoContainer
+          components={[
+            'Resource',
+            'Start',
+            'End',
+            'Purpose',
+            'Delete',
+          ]}
+        >
+          <DemoItem component="Name" >
+            {nameError ?
+              <TextField error id="resource-name"
+                label="Name of resource *"
+                variant="standard"
+                onChange={handleNameChange} />
+              :
+              <TextField id="resource-name"
+                label="Name of resource *"
+                variant="standard"
+                onChange={handleNameChange} />
+            }
+          </DemoItem>
+          <DemoItem component="Type" >
+            <FormControl fullWidth>
+              <InputLabel id="resource-type-select-label">Type</InputLabel>
+              <Select
+                labelId="resource-type-select-label"
+                id="resource-type-select"
+                value={type}
+                label="resource type"
+                onChange={handleTypeChange}
+              >
+                {resourceTypes.map(r => <MenuItem key={r} value={r}> {r} </MenuItem>)}
+              </Select>
+            </FormControl>
+          </DemoItem>
+          <DemoItem component="Generation" >
+            <FormControl fullWidth>
+              <InputLabel id="resource-generation-select-label">Generation</InputLabel>
+              <Select
+                labelId="resource-generation-select-label"
+                id="resource-generation-select"
+                value={generation}
+                label="resource generation"
+                onChange={handleGenerationChange}
+              >
+                {resourceGenerations.map(g => <MenuItem key={g} value={g}> {g} </MenuItem>)}
+              </Select>
+            </FormControl>
+          </DemoItem>
+          <DemoItem component="Note" >
+            <TextField id="resource-note"
+              label="Note for resource"
+              multiline
+              rows={4}
+              helperText="Describe some important note for the resource such as IP address, etc."
+              variant="standard"
+              onChange={handleNoteChange}
+            />
+          </DemoItem>
+          <DemoItem component="Color" >
+            <FormControl>
+              <InputLabel id="resource-color-select-label">Display color</InputLabel>
+              <Select
+                labelId="resource-color-select-label"
+                id="resource-color-select"
+                value={color.toString()}
+                label="resource display color"
+                onChange={handleColorChange}
+              >
+                {
+                  colorList().map((kv) =>
+                    <MenuItem key={'color-' + kv[0]} value={kv[0]}>
+                      <Box sx={{
+                        width: 100,
+                        height: 24,
+                        borderRadius: 1,
+                        backgroundColor: kv[1],
+                      }}
+                      />
+                    </MenuItem>)
+                }
+              </Select>
+            </FormControl>
+          </DemoItem>
+
+          <DemoItem component='Delete'>
+            <Stack paddingBottom={2} justifyContent={"space-between"} direction="row">
+              <Button onClick={handleClose.bind(null, true)} variant="text">Cancel</Button>
+              <Button onClick={handleClose.bind(null, false)} variant="text">Save</Button>
+            </Stack>
+          </DemoItem>
+        </DemoContainer>
+      </Box>
+    </Dialog>
+  );
 }
 
 export default ReserveDialog;

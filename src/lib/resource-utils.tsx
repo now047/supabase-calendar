@@ -45,5 +45,10 @@ export const getResouceColor = (id: number, resources: Resource[]) => {
 }
 
 export const getResourceName = (id: number, resources: Resource[]) => {
-  return resources.filter((r) => r.id === id)[0].name;
+  const ret = resources.filter((r) => r.id === id)
+  if (ret !== undefined){
+    return ret[0].name;
+  } else {
+    return 'Unknown';
+  }
 }
