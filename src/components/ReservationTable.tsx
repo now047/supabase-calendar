@@ -1,12 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import Container from "@mui/material/Container"
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
 import IEvent, { toLocalDateString } from "../lib/event-utils";
 
-
 const ReservationTable = (props: {events: IEvent[]}) => {
-
+    const [pageSize, setPageSize] = useState<number>(20);
     const renderDateString = (params: GridRenderCellParams<number>) => {
         if (params.value === undefined) 
             return '-'
@@ -15,11 +14,11 @@ const ReservationTable = (props: {events: IEvent[]}) => {
     };
 
     const eventTableColumns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 90 },
+        //{ field: 'id', headerName: 'ID', width: 90 },
         {
-            field: 'title',
-            headerName: 'Title',
-            width: 300,
+            field: 'resource_name',
+            headerName: 'Resource',
+            width: 200,
             editable: false,
         },
         {
@@ -37,7 +36,13 @@ const ReservationTable = (props: {events: IEvent[]}) => {
             width: 180,
             editable: false,
             renderCell: renderDateString
-        }
+        },
+        {
+            field: 'purpose_of_use',
+            headerName: 'Pose of use',
+            width: 400,
+            editable: false,
+        },
     ];
 
     const handleDubleClickOnTable = () => {
@@ -49,12 +54,14 @@ const ReservationTable = (props: {events: IEvent[]}) => {
         <div className={"flex m-4 justify-center"}>
         <h1> Reservation </h1>
         <Container sx={{display: 'flex', justifyContent: 'center', width: '90%'}}>
-        <Box sx={{height: 400, width: '100%'}}>
+        <Box sx={{ width: '100%'}}>
             <DataGrid
                 rows={props.events}
                 columns={eventTableColumns}
-                pageSize={5}
-                rowsPerPageOptions={[5]}
+                pageSize={pageSize}
+                autoHeight
+                rowsPerPageOptions={[10, 20, 50, 100]}
+                onPageSizeChange={(size) => setPageSize(size)}
                 checkboxSelection
                 disableSelectionOnClick
                 experimentalFeatures={{ newEditingApi: true }}

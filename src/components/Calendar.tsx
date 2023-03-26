@@ -15,16 +15,11 @@ import { EventClickArg, EventApi, DateSelectArg } from "@fullcalendar/core";
 
 import { supabase } from "../lib/api";
 import IEvent, { dateToTimestamp, toDateString, strToTimestamp } from "../lib/event-utils";
-import { colorMap } from "../lib/resource-utils";
+import { colorMap, getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
 import { CurrentEventContext } from "./Home";
-
-export  const DBEventToIEvent = (db_event: any) => {
-    return {...db_event,
-        start: strToTimestamp(db_event.start),
-        end: strToTimestamp(db_event.end)
-    } as IEvent;
-};
+import { EventContentArg } from "@fullcalendar/core";
+import { EventSourceInput } from "@fullcalendar/core";
 
 const Calendar = () => {
     const {
@@ -49,6 +44,15 @@ const Calendar = () => {
 
     const getResouceColor = (id: number) => colorMap.get(resources.filter(r => r.id === id)[0].display_color);
 
+    const DBEventToIEvent = (db_event: any) => {
+        return {...db_event,
+            purpose_of_use: db_event.title,
+            start: strToTimestamp(db_event.start),
+            end: strToTimestamp(db_event.end),
+            resource_name: getResourceName(db_event.resource_id, resources)
+        } as IEvent;
+    };
+
     const syncEvent = async (e: IEvent) => {
         console.log("syncEvent:", e);
         if (e.id) {
@@ -56,7 +60,7 @@ const Calendar = () => {
                 .from("events")
                 .update({
                     id: e.id,
-                    title: e.title,
+                    title: e.purpose_of_use,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
                     color: getResouceColor(e.resource_id),
@@ -73,7 +77,7 @@ const Calendar = () => {
             let { data: event, error } = await supabase
                 .from("events")
                 .insert({
-                    title: e.title,
+                    title: e.purpose_of_use,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
                     color: getResouceColor(e.resource_id),
@@ -88,8 +92,7 @@ const Calendar = () => {
                 setError(null);
             }
         }
-    }
-
+    };
 
     const modifyEvent = (event: IEvent|null) => {
         setReservationInfo(null);
@@ -122,7 +125,8 @@ const Calendar = () => {
             user: 'dummyUser',
             start: event.event.start?.getTime()?? dayjs('today').toDate().getTime(),
             end: event.event.end?.getTime()?? dayjs('today').toDate().getTime(),
-            title: event.event.title,
+            purpose_of_use: event.event.extendedProps.purpose_of_use,
+            resource_name: event.event.title,
             resources: resources,
             resource_id: events.filter((e) => { return e.id! === Number(event.event.id)})[0].resource_id,
             onClose: modifyEvent,
@@ -149,7 +153,7 @@ const Calendar = () => {
                e.start !== dateToTimestamp(ie.start) ||
                ie.end === null ||
                e.end !== dateToTimestamp(ie.end) ||
-               e.title !== ie.title
+               e.purpose_of_use !== ie.extendedProps.purpose_of_use
     };
 
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
@@ -160,7 +164,7 @@ const Calendar = () => {
                 e = {
                     start: dateToTimestamp(ie.start!),
                     end: dateToTimestamp(ie.end!),
-                    title: ie.title,
+                    purpose_of_use: ie.extendedProps.purpose_of_use,
                     color: e.color,
                     id: e.id,
                     resource_id: e.resource_id
@@ -173,7 +177,7 @@ const Calendar = () => {
         })
         if (!is_changed){
             console.log("Update notified. nothing changed")
-        }
+        }        
     };
 
     const handleDateSelect = (arg: DateSelectArg) => {
@@ -196,11 +200,25 @@ const Calendar = () => {
             user: 'dummyUser',
             start: arg.start.getTime(),
             end: arg.end.getTime(),
+            purpose_of_use: "",
+            resource_name: "",
             resources: resources,
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
         setReservationInfo(info);
+    };
+
+    const renderEventContent = (eventInfo: EventContentArg) => {
+            return (
+                <a className="fc-event fc-event-draggable
+                            fc-event-resizable fc-event-start fc-event-end
+                            fc-event-future fc-daygrid-event fc-daygrid-dot-event">
+                    <div className="fc-daygrid-event-dot"></div>
+                    <div className="fc-event-time">{eventInfo.timeText}</div>
+                    <div className="fc-event-title">{eventInfo.event.title}</div>
+                </a>
+            )
     };
 
     return (
@@ -232,17 +250,19 @@ const Calendar = () => {
                 eventResizableFromStart={false}
                 selectable={true}
                 select={handleDateSelect}
-                events={events as []}
-            /*  events={events.map((e) => {
-                return {
-                    'start': e.start,
-                    'end': e.end,
-                    'color': e.color,
-                    'id': e.id,
-                    'title': e.title,
-                    'startEditable':true,
-                    'durationEditable': true}
-            }) as []} */
+                //eventContent={renderEventContent}
+                /*events={events as []}*/
+                events={events.map((e) => {
+                        return {
+                                start: e.start,
+                                end: e.end,
+                                color: e.color,
+                                id: e.id,
+                                title: e.resource_name!,
+                                extendedProps: {purpose_of_use: e.purpose_of_use},
+                                //startEditable: true,
+                                //durationEditable: true
+                        }}) as EventSourceInput}
             />
         </div>
     );

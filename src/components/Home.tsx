@@ -10,9 +10,10 @@ import ResourceDialog from "./ResourceDialog";
 import Resource from "../lib/resource-utils"
 import Header, {TabLabel} from "./Header"
 import ResourceTable from "./ResourceTable";
-import Calendar, { DBEventToIEvent } from "./Calendar";
+import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
-
+import { getResourceName } from "../lib/resource-utils";
+import { strToTimestamp } from "../lib/event-utils";
 
 // Context
 type TabContextType = {
@@ -140,31 +141,44 @@ const Home = ({ user }: { user: User }) => {
 
         if (!eventSynced) {
             console.log('calling fetch events')
-            fetchEvents().catch(console.error);
+            fetchEvents().then((events: IEvent[]) => {
+                setEvents(events);
+                setEventSynced(true);
+            }).catch(setError)
         }
         if (!resourceSynced) {
             console.log('calling fetch resources')
-            fetchResources().catch(console.error);
+            fetchResources().catch(setError);
         }
     }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
+    const DBEventToIEvent = (db_event: any) => {
+        return {...db_event,
+            purpose_of_use: db_event.title,
+            start: strToTimestamp(db_event.start),
+            end: strToTimestamp(db_event.end),
+            resource_name: getResourceName(db_event.resource_id, resources)
+        } as IEvent;
+    };
+
     // Menue
     const handleLogout = async () => {
-        supabase.auth.signOut().catch(console.error);
+        supabase.auth.signOut().catch(setError);
     };
 
     // Events
     const fetchEvents = async () => {
-        let { data: events, error } = await supabase
-            .from("events")
-            .select("*")
-            .order("id", { ascending: false });
-        if (error) console.log("error", error);
-        else {
-            console.log("Events: ", events);
-            setEvents(events?.map((e) => DBEventToIEvent(e)) as IEvent[]);
-            setEventSynced(true)
-        }
+        return new Promise(async (resolve: (e:IEvent[])=>void, reject) => {
+            let { data: events, error } = await supabase
+                .from("events")
+                .select("*")
+                .order("id", { ascending: false });
+            if (error) {
+                reject(error.message);
+            } else {
+                resolve(events?.map((e) => DBEventToIEvent(e)) as IEvent[]);
+            }
+        });
     };
 
     // Resources
@@ -173,7 +187,7 @@ const Home = ({ user }: { user: User }) => {
             .from("resources")
             .select("*")
             .order("id", { ascending: false });
-        if (error) console.log("error", error);
+        if (error) setError(error.message);
         else {
             console.log("Resources: ", resources);
             setResources(resources as Resource[]);
@@ -273,7 +287,8 @@ const Home = ({ user }: { user: User }) => {
             <CurrentTabContext.Provider value={currentTabContext}>
                 <Header/>
             </CurrentTabContext.Provider>
-            <ReservationTable events={events} />
+            <ReservationTable events={events.map((e) => {
+                return {...e, resource_name: getResourceName(e.resource_id, resources)}})} />
         </div>
     ): (
         <>{handleLogout()}</>

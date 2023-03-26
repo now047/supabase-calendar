@@ -1,22 +1,9 @@
 import * as React from 'react';
 import dayjs, {Dayjs} from 'dayjs';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
-import PersonIcon from '@mui/icons-material/Person';
-import AddIcon from '@mui/icons-material/Add';
-import Typography from '@mui/material/Typography';
-import { blue } from '@mui/material/colors';
 import TextField from '@mui/material/TextField';
-import Input from '@mui/material/Input';
-import InputLabel from '@mui/material/InputLabel';
-import InputAdornment from '@mui/material/InputAdornment';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -24,28 +11,9 @@ import Box from '@mui/material/Box';
 import { DemoContainer, DemoItem } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DateField } from '@mui/x-date-pickers/DateField';
-import { TimeField } from '@mui/x-date-pickers/TimeField';
-import { DateTimeField } from '@mui/x-date-pickers/DateTimeField';
-import { MultiInputDateRangeField } from '@mui/x-date-pickers-pro/MultiInputDateRangeField';
-import { MultiInputTimeRangeField } from '@mui/x-date-pickers-pro/MultiInputTimeRangeField';
-import { MultiInputDateTimeRangeField } from '@mui/x-date-pickers-pro/MultiInputDateTimeRangeField';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { StaticDateTimePicker } from '@mui/x-date-pickers/StaticDateTimePicker';
-import { useTimePickerDefaultizedProps } from '@mui/x-date-pickers/TimePicker/shared';
-
-
-import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction"
-import {
-    EventApi,
-    DateSelectArg,
-    EventClickArg,
-    EventContentArg,
-    formatDate,
-  } from '@fullcalendar/core'
 
 import IEvent from "../lib/event-utils"
 import Resource from "../lib/resource-utils"
@@ -56,7 +24,8 @@ export interface ReserveDialogProps {
     user: string;
     start: number;
     end?: number;
-    title?: string;
+    purpose_of_use?: string;
+    resource_name: string;
     resources: Resource[];
     resource_id?: number;
     onClose: (event: IEvent|null) => void;
@@ -68,20 +37,18 @@ const ReserveDialog = (props: ReserveDialogProps) => {
     const [resource_id, setResourceId] = React.useState<number>(props.resource_id ?? 1);
     const [start, setStart] = React.useState(dayjs(props.start));
     const [end, setEnd] = React.useState(props.end? dayjs(props.end) : dayjs(props.start));
-    const [title, setTitle] = React.useState(props.title? props.title: "");
-    const titleTextRef = React.useRef('');
-    const startRef = React.useRef();
+    const [purposeOfUse, setPurposeOfUse] = React.useState(props.purpose_of_use?? "a");
 
     const handleClose = (cancel: boolean) => {
         if (!cancel){
-            if (title === ""){
+            if (purposeOfUse === ""){
                 window.alert("Please input purpose of use for the event.")
             } else {
                 props.onClose({
                     id: props.id,
                     start: start.unix() * 1000,
                     end: end.unix() * 1000,
-                    title: title,
+                    purpose_of_use: purposeOfUse,
                     resource_id: resource_id
                 } as IEvent);
             }
@@ -102,12 +69,12 @@ const ReserveDialog = (props: ReserveDialogProps) => {
         }
     }
 
-    const handleTitleChange = (t: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-        setTitle(t.currentTarget.value);
+    const handlePOUChange = (t: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+        setPurposeOfUse(t.currentTarget.value);
     }
 
     const handleDelete = () => {
-        props.onDelete(props.id, title)
+        props.onDelete(props.id, purposeOfUse)
     }
 
 
@@ -144,8 +111,8 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                     ]}
                 >
                     <DemoItem label={<ProLabel>Purpose of Use</ProLabel>} component="Purpose" >
-                        <TextField autoFocus required id="title-input" label="Input purpose of use" variant="outlined"
-                                    value={title} onChange={handleTitleChange}/>
+                        <TextField autoFocus required id="pou-input" label="Input purpose of use" variant="outlined"
+                                    value={purposeOfUse} onChange={handlePOUChange}/>
                     </DemoItem>
                     <DemoItem label={<ProLabel>Resource</ProLabel>} component="Resource" >
                         <FormControl fullWidth>

@@ -1,5 +1,3 @@
-import { EventInput } from '@fullcalendar/core'
-
 const simpleDateString = (d: Date, utc: boolean) => {
   if (utc) {
     const year = d.getUTCFullYear();
@@ -55,9 +53,10 @@ export const dateToTimestamp = (date: Date) => {
 export default interface IEvent {
   id?: number;
   created_at?: number;
-  title: string;
+  purpose_of_use: string;
   start: number; // miliseconds
   end: number;   // miliseconds
   color: string;
   resource_id: number;
+  resource_name?: string;
 }
