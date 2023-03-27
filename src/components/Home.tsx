@@ -5,7 +5,7 @@ import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
 import IEvent from "../lib/event-utils"
-import ReserveDialog, {ReserveDialogProps} from "./ReserveDialog";
+import ReserveDialog, { ReserveDialogProps } from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
 import Resource from "../lib/resource-utils"
 import Header from "./Header"
@@ -14,17 +14,16 @@ import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
 import { getResourceName } from "../lib/resource-utils";
 import { strToTimestamp } from "../lib/event-utils";
-import { EventContext, HeaderContext, ResourceContext } from "../App";
+import { EventContext, HeaderContext } from "../App";
 
 const Home = ({ user }: { user: User }) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
-    const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps|null> (null);
+    const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps | null>(null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const {tab, setTab, errorText, setError} = useContext(HeaderContext);
-    const {events, setEvents} = useContext(EventContext);
-    const {resources, setResources} = useContext(ResourceContext);;
+    const { tab, setTab, errorText, setError } = useContext(HeaderContext);
+    const { events, resources } = useContext(EventContext);
 
     interface IResults {
         access_token: string;
@@ -61,8 +60,8 @@ const Home = ({ user }: { user: User }) => {
 
         if (!eventSynced) {
             console.log('calling fetch events')
-            fetchEvents().then((events: IEvent[]) => {
-                setEvents(events);
+            fetchEvents().then((levents: IEvent[]) => {
+                events!.current = levents;
                 setEventSynced(true);
             }).catch(setError)
         }
@@ -73,11 +72,12 @@ const Home = ({ user }: { user: User }) => {
     }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
     const DBEventToIEvent = (db_event: any) => {
-        return {...db_event,
+        return {
+            ...db_event,
             purpose_of_use: db_event.title,
             start: strToTimestamp(db_event.start),
             end: strToTimestamp(db_event.end),
-            resource_name: getResourceName(db_event.resource_id, resources)
+            resource_name: getResourceName(db_event.resource_id, resources!.current)
         } as IEvent;
     };
 
@@ -88,7 +88,7 @@ const Home = ({ user }: { user: User }) => {
 
     // Events
     const fetchEvents = async () => {
-        return new Promise(async (resolve: (e:IEvent[])=>void, reject) => {
+        return new Promise(async (resolve: (e: IEvent[]) => void, reject) => {
             let { data: events, error } = await supabase
                 .from("events")
                 .select("*")
@@ -103,14 +103,14 @@ const Home = ({ user }: { user: User }) => {
 
     // Resources
     const fetchResources = async () => {
-        let { data: resources, error } = await supabase
+        let { data: res, error } = await supabase
             .from("resources")
             .select("*")
             .order("id", { ascending: false });
         if (error) setError(error.message);
         else {
-            console.log("Resources: ", resources);
-            setResources(resources as Resource[]);
+            console.log("Resources: ", res);
+            resources!.current = res as Resource[];
             setResourceSynced(true);
         }
     };
@@ -132,7 +132,7 @@ const Home = ({ user }: { user: User }) => {
             if (error) setError(error.message);
             else {
                 setResourceSynced(false);
-                console.log('Updated resources', resources)
+                console.log('Updated resources', resource)
                 setError(null);
             }
         } else {
@@ -175,37 +175,38 @@ const Home = ({ user }: { user: User }) => {
     ) : resourceAdding ? (
         <div className={"supabase-calendar-main"}>
             <ResourceDialog {
-                ...{ 
+                ...{
                     name: "",
                     generation: "",
                     type: "",
                     open: true,
-                    resources: resources,
+                    resources: resources!.current,
                     onClose: handleResourceDialogClose
                 }} />
         </div>
-    ) : tab === 'Resource' ?(
+    ) : tab === 'Resource' ? (
         <div className={"supabase-calendar-main"}>
-            <Header/>
+            <Header />
             <ResourceTable
                 setResourceAdding={setResourceAdding}
-                setResourceSynced={setResourceSynced}/>
+                setResourceSynced={setResourceSynced} />
         </div>
-        ): tab === 'Calendar' ?(
+    ) : tab === 'Calendar' ? (
         <div className={"supabase-calendar-main"}>
-            <Header/>
+            <Header />
             <Calendar
                 eventSynced={eventSynced}
                 setReservationInfo={setReservationInfo}
-                setEventSynced={setEventSynced}/>
+                setEventSynced={setEventSynced} />
         </div>
-        ): tab === 'Reservation' ?(
+    ) : tab === 'Reservation' ? (
         <div className={"supabase-calendar-main"}>
-            <Header/>
-            <ReservationTable events={events.map((e) => {
-                return {...e, resource_name: getResourceName(e.resource_id, resources)}})} />
+            <Header />
+            <ReservationTable events={events!.current.map((e) => {
+                return { ...e, resource_name: getResourceName(e.resource_id, resources!.current) }
+            })} />
         </div>
-    ): (
+    ) : (
         <>{handleLogout()}</>
     )
 };

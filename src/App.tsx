@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/api";
 import Auth from "./components/Auth";
 import Home from "./components/Home";
@@ -50,33 +50,22 @@ const defaultHeaderContext: HeaderContextType = {
 };
 export const HeaderContext = createContext(defaultHeaderContext);
 
-type ResourceContextType = {
-  resources: Resource[];
-  setResources: (r: Resource[]) => void;
-};
-const defaultResourceContext: ResourceContextType = {
-  resources: [],
-  setResources: (r: Resource[]) => { },
-};
-export const ResourceContext = createContext(defaultResourceContext);
-
 type EventContextType = {
-  events: IEvent[];
-  setEvents: (s: IEvent[]) => void;
+  events: React.MutableRefObject<IEvent[]> | null;
+  resources: React.MutableRefObject<Resource[]> | null;
 };
 const defaultEventContext: EventContextType = {
-  events: [],
-  setEvents: (s: IEvent[]) => { },
+  events: null,
+  resources: null
 };
 export const EventContext = createContext(defaultEventContext);
-
 
 function App() {
   const [user, setUser] = useState<User | null>(new DummyUser());
   const [errorText, setError] = useState<string | null>("");
   const [tab, setTab] = useState<TabLabel>("Calendar");
-  const [events, setEvents] = useState<IEvent[]>([]);
-  const [resources, setResources] = useState<Resource[]>([]);
+  const events = useRef<IEvent[]>([]);
+  const resources = useRef<Resource[]>([]);
 
   const currentHeaderContext = {
     user,
@@ -86,12 +75,8 @@ function App() {
     setError
   };
   const currentEventContext = {
-    events,
-    setEvents
-  };
-  const currentResourceContext = {
-    resources,
-    setResources
+    events: events,
+    resources: resources
   };
   useEffect(() => {
     const session = supabase.auth.session();
@@ -118,12 +103,10 @@ function App() {
       {
         <HeaderContext.Provider value={currentHeaderContext}>
           <EventContext.Provider value={currentEventContext}>
-            <ResourceContext.Provider value={currentResourceContext}>
-              <div className='demo-app'>
-                <Sidebar />
-                <Home user={new DummyUser()} />
-              </div>
-            </ResourceContext.Provider>
+            <div className='demo-app'>
+              <Sidebar />
+              <Home user={new DummyUser()} />
+            </div>
           </EventContext.Provider>
         </HeaderContext.Provider>
       }

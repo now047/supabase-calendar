@@ -11,24 +11,15 @@ import {
 import { supabase } from "../lib/api";
 
 import { EventContext, HeaderContext } from "../App";
-import { ResourceContext } from "../App";
 import Resource, { colorMap } from "../lib/resource-utils";
 
 const ResourceTable = (props: {
-        setResourceAdding: (b: boolean) => void
-        setResourceSynced: (b: boolean) => void}) => {
+    setResourceAdding: (b: boolean) => void
+    setResourceSynced: (b: boolean) => void
+}) => {
     const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
-    const {tab, setTab, errorText, setError} = useContext(HeaderContext)
-
-    const {
-        resources,
-        setResources
-    } = useContext(ResourceContext);
-
-    const {
-        events,
-        setEvents
-    } = useContext(EventContext);
+    const { tab, setTab, errorText, setError } = useContext(HeaderContext)
+    const { events, resources } = useContext(EventContext);
 
     const businessHours = {
         daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday 
@@ -146,14 +137,14 @@ const ResourceTable = (props: {
                         locale='ja'
                         businessHours={businessHours}
                         timeZone='local'
-                        events={events as []}
+                        events={events!.current as []}
                     />
                 </div>
                 <div className={"flex m-4 justify-center"}>
                     <Container sx={{ display: 'flex', justifyContent: 'center', width: '90%' }}>
                         <Box sx={{ width: '100%' }}>
                             <DataGrid
-                                rows={resources.map((r) => { return { ...r, "this": r } })}
+                                rows={resources!.current.map((r) => { return { ...r, "this": r } })}
                                 columns={resourceTableColumns}
                                 rowsPerPageOptions={[5, 10, 20, 50]}
                                 pageSize={resourceTablePageSize}

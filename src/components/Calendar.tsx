@@ -1,18 +1,20 @@
-import React, {useContext} from "react";
+import React, { useContext } from "react";
 
-import { Box, LinearProgress  } from "@mui/material";
-import {Backdrop} from "@mui/material";
-import {CircularProgress} from "@mui/material";
+import { Box, LinearProgress } from "@mui/material";
+import { Backdrop } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { 
+import interactionPlugin, {
     DateClickArg,
     EventDragStopArg,
     EventDragStartArg
 } from "@fullcalendar/interaction" // needed for dayClick
-import { EventClickArg, EventApi, DateSelectArg,
-        EventContentArg, EventSourceInput } from "@fullcalendar/core";
+import {
+    EventClickArg, EventApi, DateSelectArg,
+    EventContentArg, EventSourceInput
+} from "@fullcalendar/core";
 import jaLocale from '@fullcalendar/core/locales/ja';
 import dayjs from "dayjs";
 
@@ -20,24 +22,17 @@ import { supabase } from "../lib/api";
 import IEvent, { dateToTimestamp, toDateString, strToTimestamp } from "../lib/event-utils";
 import { colorMap, getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
-import { EventContext, HeaderContext, ResourceContext } from "../App";
+import { EventContext, HeaderContext } from "../App";
 const Calendar = (props: {
-        eventSynced: boolean,
-        setReservationInfo: (info: ReserveDialogProps|null) => void,
-        setEventSynced: (b: boolean) => void
-    }) => {
-    const {user, tab, setTab, errorText, setError} = useContext(HeaderContext)
-    const {
-        events,
-        setEvents
-    } = useContext(EventContext);
-    const {
-        resources,
-        setResources
-    } = useContext(ResourceContext);
+    eventSynced: boolean,
+    setReservationInfo: (info: ReserveDialogProps | null) => void,
+    setEventSynced: (b: boolean) => void
+}) => {
+    const { user, tab, setTab, errorText, setError } = useContext(HeaderContext)
+    const { events, resources } = useContext(EventContext);
 
-    const businessHours =  {
-        daysOfWeek: [ 1, 2, 3, 4, 5 ], // Monday - Friday 
+    const businessHours = {
+        daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday 
         startTime: '08:30',
         endTime: '17:15',
     };
@@ -46,14 +41,15 @@ const Calendar = (props: {
         console.log("date click: ", arg)
     };
 
-    const getResouceColor = (id: number) => colorMap.get(resources.filter(r => r.id === id)[0].display_color);
+    const getResouceColor = (id: number) => colorMap.get(resources!.current.filter(r => r.id === id)[0].display_color);
 
     const DBEventToIEvent = (db_event: any) => {
-        return {...db_event,
+        return {
+            ...db_event,
             purpose_of_use: db_event.title,
             start: strToTimestamp(db_event.start),
             end: strToTimestamp(db_event.end),
-            resource_name: getResourceName(db_event.resource_id, resources)
+            resource_name: getResourceName(db_event.resource_id, resources!.current)
         } as IEvent;
     };
 
@@ -68,7 +64,7 @@ const Calendar = (props: {
                     start: toDateString(e.start),
                     end: toDateString(e.end),
                     color: getResouceColor(e.resource_id),
-                    resource_id: e.resource_id 
+                    resource_id: e.resource_id
                 })
                 .single();
             if (error) setError(error.message);
@@ -87,26 +83,26 @@ const Calendar = (props: {
                     end: toDateString(e.end),
                     color: getResouceColor(e.resource_id),
                     user_id: user!.id,
-                    resource_id: e.resource_id 
+                    resource_id: e.resource_id
                 })
                 .single();
             if (error) setError(error.message);
             else {
                 props.setEventSynced(false);
-                setEvents([...events, DBEventToIEvent(event)])
+                events!.current = ([...events!.current, DBEventToIEvent(event)])
                 setError(null);
             }
         }
     };
 
-    const modifyEvent = (event: IEvent|null) => {
+    const modifyEvent = (event: IEvent | null) => {
         props.setReservationInfo(null);
-        if (event !== null){
+        if (event !== null) {
             syncEvent(event);
         }
     };
 
-    const deleteEvent = async (id: string|undefined, title: string|undefined) => {
+    const deleteEvent = async (id: string | undefined, title: string | undefined) => {
         console.log("deleteEvent:", title);
         props.setReservationInfo(null);
         if (title && id) {
@@ -118,7 +114,7 @@ const Calendar = (props: {
                 props.setEventSynced(false);
                 setError(null);
             }
-        } 
+        }
     };
 
     const handleEventClick = (event: EventClickArg) => {
@@ -128,23 +124,23 @@ const Calendar = (props: {
             id: event.event.id,
             open: true,
             user: 'dummyUser',
-            start: event.event.start?.getTime()?? dayjs('today').toDate().getTime(),
-            end: event.event.end?.getTime()?? dayjs('today').toDate().getTime(),
+            start: event.event.start?.getTime() ?? dayjs('today').toDate().getTime(),
+            end: event.event.end?.getTime() ?? dayjs('today').toDate().getTime(),
             purpose_of_use: event.event.extendedProps.purpose_of_use,
             resource_name: event.event.title,
-            resources: resources,
-            resource_id: events.filter((e) => { return e.id! === Number(event.event.id)})[0].resource_id,
+            resources: resources!.current,
+            resource_id: events!.current.filter((e) => { return e.id! === Number(event.event.id) })[0].resource_id,
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
         props.setReservationInfo(info);
     };
 
-    const handleDragStart = (event:EventDragStartArg) => {
+    const handleDragStart = (event: EventDragStartArg) => {
         console.log("event drag start: ", event)
     };
 
-    const handleDragStop = (event:EventDragStopArg) => {
+    const handleDragStop = (event: EventDragStopArg) => {
         console.log("event drag end: ", event)
     };
 
@@ -155,15 +151,15 @@ const Calendar = (props: {
 
     const eventDiffers = (e: IEvent, ie: EventApi) => {
         return ie.start === null ||
-               e.start !== dateToTimestamp(ie.start) ||
-               ie.end === null ||
-               e.end !== dateToTimestamp(ie.end) ||
-               e.purpose_of_use !== ie.extendedProps.purpose_of_use
+            e.start !== dateToTimestamp(ie.start) ||
+            ie.end === null ||
+            e.end !== dateToTimestamp(ie.end) ||
+            e.purpose_of_use !== ie.extendedProps.purpose_of_use
     };
 
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
         let is_changed = false;
-        events.map(e => {
+        events!.current.map(e => {
             let ie = updated_events.find((ie, i, api) => { return Number(ie.id) == e.id })
             if (ie !== undefined && eventDiffers(e, ie)) {
                 e = {
@@ -180,14 +176,14 @@ const Calendar = (props: {
             }
             return e;
         })
-        if (!is_changed){
+        if (!is_changed) {
             console.log("Update notified. nothing changed")
-        }        
+        }
     };
 
     const handleDateSelect = (arg: DateSelectArg) => {
         let calendarApi = arg.view.calendar
-    
+
         calendarApi.unselect() // clear date selection
         /* if (title) {
             calendarApi.addEvent({
@@ -207,7 +203,7 @@ const Calendar = (props: {
             end: arg.end.getTime(),
             purpose_of_use: "",
             resource_name: "",
-            resources: resources,
+            resources: resources!.current,
             onClose: modifyEvent,
             onDelete: deleteEvent
         }
@@ -215,15 +211,15 @@ const Calendar = (props: {
     };
 
     const renderEventContent = (eventInfo: EventContentArg) => {
-            return (
-                <a className="fc-event fc-event-draggable
+        return (
+            <a className="fc-event fc-event-draggable
                             fc-event-resizable fc-event-start fc-event-end
                             fc-event-future fc-daygrid-event fc-daygrid-dot-event">
-                    <div className="fc-daygrid-event-dot"></div>
-                    <div className="fc-event-time">{eventInfo.timeText}</div>
-                    <div className="fc-event-title">{eventInfo.event.title}</div>
-                </a>
-            )
+                <div className="fc-daygrid-event-dot"></div>
+                <div className="fc-event-time">{eventInfo.timeText}</div>
+                <div className="fc-event-title">{eventInfo.event.title}</div>
+            </a>
+        )
     };
 
     return (
@@ -263,17 +259,18 @@ const Calendar = (props: {
                 select={handleDateSelect}
                 //eventContent={renderEventContent}
                 /*events={events as []}*/
-                events={events.map((e) => {
-                        return {
-                                start: e.start,
-                                end: e.end,
-                                color: e.color,
-                                id: e.id,
-                                title: e.resource_name!,
-                                extendedProps: {purpose_of_use: e.purpose_of_use},
-                                //startEditable: true,
-                                //durationEditable: true
-                        }}) as EventSourceInput}
+                events={events!.current.map((e) => {
+                    return {
+                        start: e.start,
+                        end: e.end,
+                        color: e.color,
+                        id: e.id,
+                        title: e.resource_name!,
+                        extendedProps: { purpose_of_use: e.purpose_of_use },
+                        //startEditable: true,
+                        //durationEditable: true
+                    }
+                }) as EventSourceInput}
             />
         </div>
     );

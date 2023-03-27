@@ -8,12 +8,12 @@ import {
 } from '@fullcalendar/core'
 import { Badge, Container, Box } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import {Avatar} from '@mui/material';
-import {Typography} from '@mui/material';
+import { Avatar } from '@mui/material';
+import { Typography } from '@mui/material';
 
 import { colorMap } from '../lib/resource-utils';
 import Resource from '../lib/resource-utils';
-import { EventContext, ResourceContext } from '../App';
+import { EventContext } from '../App';
 
 type SupabaseCalendarConfig = {
   weekEndVisible: boolean,
@@ -27,31 +27,30 @@ const defaultConfig: SupabaseCalendarConfig = {
 
 const SupaCalendarContext = React.createContext(defaultConfig)
 const Sidebar = () => {
-  const resourceContext = useContext(ResourceContext);
   const eventContext = useContext(EventContext);
   const [weekendsVisible, setWeekendVisible] = useState<boolean>(false);
   const handleWeekendsToggle = () => {
-      setWeekendVisible(!weekendsVisible);
+    setWeekendVisible(!weekendsVisible);
   }
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-      if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-          clickInfo.event.remove()
-      }
+    if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+      clickInfo.event.remove()
+    }
   }
 
   const renderSidebarEvent = (event: EventApi) => {
-      return (
-        <li key={event.id}>
-          <b>{formatDate(event.start!, {year: 'numeric', month: 'short', day: 'numeric'})}</b>
-          <i>{event.title}</i>
-        </li>
-      )
+    return (
+      <li key={event.id}>
+        <b>{formatDate(event.start!, { year: 'numeric', month: 'short', day: 'numeric' })}</b>
+        <i>{event.title}</i>
+      </li>
+    )
   }
 
   const numEventsForSpecificResource = (id: number) => {
     let count = 0;
-    eventContext.events.forEach((e) => {
+    eventContext.events!.current.forEach((e) => {
       if (e.resource_id === id) count++;
     })
     return count;
@@ -59,32 +58,32 @@ const Sidebar = () => {
 
   const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
     return <>
-        <Badge badgeContent={numEventsForSpecificResource(params.value?.id!)}
-               color="secondary"
-               variant="dot"
-               overlap="circular">
-          <Avatar sx={{
-              bgcolor: colorMap.get(params.value!.display_color),
-              width: 18, height: 18
-          }}>
-              {params.value!.name[0]}
-          </Avatar>
-        </Badge>
-        <Typography sx={{ padding: 1 }}>
-            {params.value!.name}
-            # 
-            {params.value!.type}
-        </Typography>
+      <Badge badgeContent={numEventsForSpecificResource(params.value?.id!)}
+        color="secondary"
+        variant="dot"
+        overlap="circular">
+        <Avatar sx={{
+          bgcolor: colorMap.get(params.value!.display_color),
+          width: 18, height: 18
+        }}>
+          {params.value!.name[0]}
+        </Avatar>
+      </Badge>
+      <Typography sx={{ padding: 1 }}>
+        {params.value!.name}
+        #
+        {params.value!.type}
+      </Typography>
     </>
   };
   const resourceTableColumns: GridColDef[] = [
-      {
-          field: 'this',
-          headerName: 'Resource',
-          width: 200,
-          editable: false,
-          renderCell: resourceAvatar
-      }
+    {
+      field: 'this',
+      headerName: 'Resource',
+      width: 200,
+      editable: false,
+      renderCell: resourceAvatar
+    }
   ];
 
   return (
@@ -109,16 +108,16 @@ const Sidebar = () => {
       </div>
       <div className='supabase-calendar-sidebar-table'>
         <Container sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <Box sx={{ width: '100%' }}>
-                <DataGrid
-                    rows={resourceContext.resources.map((r) => { return { ...r, "this": r } })}
-                    columns={resourceTableColumns}
-                    rowsPerPageOptions={[25]}
-                    pagination
-                    autoHeight
-                    disableSelectionOnClick
-                />
-            </Box>
+          <Box sx={{ width: '100%' }}>
+            <DataGrid
+              rows={eventContext.resources!.current.map((r) => { return { ...r, "this": r } })}
+              columns={resourceTableColumns}
+              rowsPerPageOptions={[25]}
+              pagination
+              autoHeight
+              disableSelectionOnClick
+            />
+          </Box>
         </Container>
       </div>
     </div>
