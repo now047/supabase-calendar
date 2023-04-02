@@ -203,9 +203,6 @@ const Home = ({ user }: { user: User }) => {
         <div className={"supabase-calendar-main"}>
             <Header />
             <ReservationTable
-                events={events!.current.map((e) => {
-                    return { ...e, resource_name: getResourceName(e.resource_id, resources!.current) }
-                })}
                 setReservationInfo={setReservationInfo}
                 setEventSynced={setEventSynced}
                 />

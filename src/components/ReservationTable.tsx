@@ -1,10 +1,10 @@
 import React, { useContext, useMemo, useState } from "react";
 import Container from "@mui/material/Container"
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowId, GridRowModel, GridToolbarContainer, useGridApiContext } from "@mui/x-data-grid";
-import { Box, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from "@mui/material";
+import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, Radio, RadioGroup, Stack } from "@mui/material";
 
 import { supabase } from "../lib/api";
-import IEvent, { toLocalDateString } from "../lib/event-utils";
+import { toLocalDateString } from "../lib/event-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
 import { HeaderContext, EventContext } from "../App";
 
@@ -37,15 +37,15 @@ function MyDay(
     () => MyDay.range(date, localizer),
     [date, localizer]
   )
-  const ret = 
-      <TimeGrid
-        eventOffset={15}
-        max={max}
-        min={min}
-        localizer={localizer}
-        range={currRange}
-        scrollToTime={scrollToTime}
-        {...props} />
+  const ret =
+    <TimeGrid
+      eventOffset={15}
+      max={max}
+      min={min}
+      localizer={localizer}
+      range={currRange}
+      scrollToTime={scrollToTime}
+      {...props} />
   console.log(ret);
   return (ret);
 }
@@ -83,7 +83,6 @@ MyDay.title = (date: Date) => {
 };
 
 const ReservationTable = (props: {
-  events: IEvent[],
   setReservationInfo: (info: ReserveDialogProps) => void,
   setEventSynced: (b: boolean) => void,
 }) => {
@@ -218,40 +217,64 @@ const ReservationTable = (props: {
   )
 
   const { types, generations } = useMemo(
-    () => ( {
+    () => ({
       types: resources!.current.map(r => r.type).filter((v, i, a) => a.indexOf(v) === i),
       generations: resources!.current.map(r => r.generation).filter((v, i, a) => a.indexOf(v) === i)
     }), [resources]
   )
+
+  const [typeCheckedState, setTypeCheckedState] = useState(
+    types.map(t => true)
+  );
+
+  const handleSelectTypeChange = (i: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    setTypeCheckedState(typeCheckedState.map((c, j)  => (i===j) ? event.target.checked : c));
+  }
+
+  const [genCheckedState, setGenCheckedState] = useState(
+    generations.map(g => true)
+  );
+
+  const handleSelectGenChange = (i: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    setGenCheckedState(genCheckedState.map((c, j)  => (i===j) ? event.target.checked : c));
+  }
+
+  const selectedResources = useMemo(
+    () => 
+    resources!.current.filter(r => 
+      typeCheckedState[types.indexOf(r.type)] && genCheckedState[generations.indexOf(r.generation)])
+  , [resources, typeCheckedState, genCheckedState])
+
+  const selectedEvents = useMemo(
+    () =>
+    events!.current.filter(e => 
+      selectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1)
+  , [events, typeCheckedState, genCheckedState])
 
   return (
     <Stack spacing={5}>
       <h1> Reservation </h1>
       <div hidden={false} className={"flex m-4 justify-center"} >
         <Stack spacing={5} direction="row" >
-          <FormControl>
-            <FormLabel id="radio-buttons-for-select-type">Select by Type</FormLabel>
-            <RadioGroup
-              row
-              aria-labelledby="radio-buttons-for-select-type"
-              name="radio-buttons-group-for-select-type"
-            >
+          <FormControl variant="standard">
+            <FormLabel component="legend">Select by Type</FormLabel>
+            <FormGroup aria-label="position" row>
               {types.map((t, i) => (
-                <FormControlLabel value={t} control={<Radio />} label={t} />
+                <FormControlLabel control={
+                  <Checkbox checked={typeCheckedState[i]} onChange={handleSelectTypeChange.bind(null, i)} />
+                } label={t} key={`checkbox-type-select-${t}`} />
               ))}
-            </RadioGroup>
+            </FormGroup>
           </FormControl>
           <FormControl>
-            <FormLabel id="radio-buttons-for-select-generation">Select by Generation</FormLabel>
-            <RadioGroup
-              row
-              aria-labelledby="radio-buttons-for-select-generation"
-              name="radio-buttons-group-for-select-generation"
-            >
+            <FormLabel component="legend">Select by Generation</FormLabel>
+            <FormGroup aria-label="position" row>
               {generations.map((g, i) => (
-                <FormControlLabel value={g} control={<Radio />} label={g} />
+                <FormControlLabel control={
+                  <Checkbox checked={genCheckedState[i]} onChange={handleSelectGenChange.bind(null, i)} />}
+                  label={g} key={`checkbox-gen-select-${g}`}/>
               ))}
-            </RadioGroup>
+            </FormGroup>
           </FormControl>
         </Stack>
       </div>
@@ -262,20 +285,17 @@ const ReservationTable = (props: {
           views={views}
           max={max}
           defaultView={Views.DAY}
-          events={events!.current.map(e => {
+          events={selectedEvents.map(e => {
             return {
-              id: e.id,
+              ...e,
               title: e.purpose_of_use,
               start: new Date(e.start),
               end: new Date(e.end),
-              allDay: false,
-              resource_id: e.resource_id,
-              color: e.color
             }
           }) as []}
           step={60}
           resourceAccessor={"resource_id"}
-          resources={resources!.current}
+          resources={selectedResources}
           resourceTitleAccessor={"name"}
           localizer={djLocalizer}
         />
@@ -284,11 +304,11 @@ const ReservationTable = (props: {
         <Container sx={{ display: 'flex', justifyContent: 'center', width: '90%' }}>
           <Box sx={{ width: '100%' }}>
             <DataGrid
-              rows={props.events}
+              rows={selectedEvents}
               columns={eventTableColumns}
               pageSize={pageSize}
               autoHeight
-              rowsPerPageOptions={[10, 20, 50, 100]}
+              rowsPerPageOptions={[10, 20, 50]}
               onPageSizeChange={(size) => setPageSize(size)}
               checkboxSelection
               disableSelectionOnClick
