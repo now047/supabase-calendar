@@ -27,8 +27,8 @@ const Header = () => {
         onChange={onChange}
       >
         <BottomNavigationAction label="Calendar" value="Calendar" icon={<CalendarMonthIcon />} />
-        <BottomNavigationAction label="Resource" value="Resource" icon={<DraftsIcon />} />
         <BottomNavigationAction label="Reservation" value="Reservation" icon={<BookIcon />} />
+        <BottomNavigationAction label="Resource" value="Resource" icon={<DraftsIcon />} />
         <BottomNavigationAction label="Logout" value="Logout" icon={<LogoutIcon />} />
       </BottomNavigation>
       {!!errorText && (
