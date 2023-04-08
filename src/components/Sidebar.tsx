@@ -1,12 +1,5 @@
 import React, { useState, useContext } from 'react'
-import {
-  EventApi,
-  DateSelectArg,
-  EventClickArg,
-  EventContentArg,
-  formatDate,
-} from '@fullcalendar/core'
-import { Badge, Container, Box } from '@mui/material';
+import { Badge, Container, Box, Stack, FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Avatar } from '@mui/material';
 import { Typography } from '@mui/material';
@@ -15,42 +8,15 @@ import { colorMap } from '../lib/resource-utils';
 import Resource from '../lib/resource-utils';
 import { EventContext } from '../App';
 
-type SupabaseCalendarConfig = {
-  weekEndVisible: boolean,
-  listView: boolean,
-}
 
-const defaultConfig: SupabaseCalendarConfig = {
-  weekEndVisible: true,
-  listView: false,
-}
-
-const SupaCalendarContext = React.createContext(defaultConfig)
-const Sidebar = () => {
-  const eventContext = useContext(EventContext);
-  const [weekendsVisible, setWeekendVisible] = useState<boolean>(false);
-  const handleWeekendsToggle = () => {
-    setWeekendVisible(!weekendsVisible);
-  }
-
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-      clickInfo.event.remove()
-    }
-  }
-
-  const renderSidebarEvent = (event: EventApi) => {
-    return (
-      <li key={event.id}>
-        <b>{formatDate(event.start!, { year: 'numeric', month: 'short', day: 'numeric' })}</b>
-        <i>{event.title}</i>
-      </li>
-    )
-  }
+const Sidebar = (props: {
+    handleSelectChange: (k: string, n: string, v: boolean)=>void
+  }) => {
+  const ctx = useContext(EventContext);
 
   const numEventsForSpecificResource = (id: number) => {
     let count = 0;
-    eventContext.events!.current.forEach((e) => {
+    ctx.events!.current.forEach((e) => {
       if (e.resource_id === id) count++;
     })
     return count;
@@ -86,31 +52,59 @@ const Sidebar = () => {
     }
   ];
 
+  const handleSelectChangeEvent = (kind: string, name: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    props.handleSelectChange(kind, name, event.target.checked);
+  }
+
+  const formControlCheckbox = (kind: string) => {
+    console.log(kind);
+    if (ctx.resourceTypes === undefined) return <></>
+    const type_iter = (kind === 'type') ?
+              ctx.resourceTypes!.types.entries() :
+              ctx.resourceTypes!.generations.entries();
+    const keyValuePairs = [];
+    let key_value = type_iter.next().value;
+    while (key_value !== undefined) {
+      keyValuePairs.push(key_value);
+      key_value = type_iter.next().value;
+    }
+
+    return <>
+      {
+        keyValuePairs.map(([k, v]) => <FormControlLabel control={
+                  <Checkbox checked={v} 
+                            onChange={handleSelectChangeEvent.bind(null, kind, k)}
+                            size='small' />
+                  }
+                label={k} key={`checkbox-type-select-${k}`} />
+        )
+      }
+      </>
+  }
+
   return (
     <div className='supabase-calendar-sidebar'>
       <div className='supabase-calendar-sidebar-section'>
-        <h2>Instructions</h2>
-        <ul>
-          <li>Select dates and you will be prompted to create a new event</li>
-          <li>Drag, drop, and resize events</li>
-          <li>Click an event to delete it</li>
-        </ul>
-      </div>
-      <div className='supabase-calendar-sidebar-section'>
-        <label>
-          <input
-            type='checkbox'
-            checked={weekendsVisible}
-            onChange={handleWeekendsToggle}
-          ></input>
-          toggle weekends
-        </label>
+        <Stack spacing={5} direction="column" >
+          <FormControl variant="standard">
+            <FormLabel component="legend">Select by Type</FormLabel>
+            <FormGroup aria-label="position" >
+              { formControlCheckbox("type")}
+            </FormGroup>
+          </FormControl>
+          <FormControl>
+            <FormLabel component="legend">Select by Generation</FormLabel>
+            <FormGroup aria-label="position" >
+              { formControlCheckbox("generation")}
+            </FormGroup>
+          </FormControl>
+        </Stack>
       </div>
       <div className='supabase-calendar-sidebar-table'>
         <Container sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <Box sx={{ width: '100%' }}>
             <DataGrid
-              rows={eventContext.resources!.current.map((r) => { return { ...r, "this": r } })}
+              rows={ctx.selectedResources!.map((r) => { return { ...r, "this": r } })}
               columns={resourceTableColumns}
               rowsPerPageOptions={[25]}
               pagination

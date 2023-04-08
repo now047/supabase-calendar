@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "./lib/api";
 import Auth from "./components/Auth";
 import Home from "./components/Home";
@@ -8,6 +8,7 @@ import type { User, UserAppMetadata, UserMetadata } from "@supabase/supabase-js"
 import IEvent from "./lib/event-utils";
 import { TabLabel } from "./components/Header";
 import Resource from "./lib/resource-utils";
+import { EventSourceInput } from "@fullcalendar/core";
 
 class DummyUAM implements UserAppMetadata {
   provider?: string
@@ -53,10 +54,19 @@ export const HeaderContext = createContext(defaultHeaderContext);
 type EventContextType = {
   events: React.MutableRefObject<IEvent[]> | null;
   resources: React.MutableRefObject<Resource[]> | null;
+  resourceTypes: {
+          types: Map<string, boolean>,
+          generations: Map<string, boolean>
+        } | undefined,
+  selectedEvents: EventSourceInput;
+  selectedResources: Resource[] | null;
 };
 const defaultEventContext: EventContextType = {
   events: null,
-  resources: null
+  resources: null,
+  resourceTypes: {types: new Map<string, boolean>(), generations: new Map<string, boolean>()},
+  selectedEvents: [],
+  selectedResources: null
 };
 export const EventContext = createContext(defaultEventContext);
 
@@ -74,11 +84,118 @@ function App() {
     errorText,
     setError
   };
+
+  const [resourceTypes, setResourceTypes] = useState<
+        {
+          types: Map<string, boolean>,
+          generations: Map<string, boolean>
+        }>({types: new Map<string, boolean>(), generations: new Map<string, boolean>()});
+
+  const handleSelectChange = (kind: string, name: string, checked: boolean) => {
+    setResourceTypes(prev => {
+      if (kind === "type") {
+        prev?.types.set(name, checked);
+      } else if (kind === "generation") {
+        prev?.generations.set(name, checked);
+      }
+      return prev;
+    });
+    onUpdateResources();
+  }
+
+  const [selectedResources, setSelectedResources] = useState(resources!.current)
+  const [selectedEvents, setSelectedEvents ] = useState<EventSourceInput>([]);
+
+  const onUpdateResources = () => {
+    console.log("onUpdateResources")
+    const types = resources!.current.map(r => r.type).filter((v, i, a) => a.indexOf(v) === i);
+    const generations = resources!.current.map(r => r.generation).filter((v, i, a) => a.indexOf(v) === i);
+
+    setResourceTypes((prev) => {
+      if (prev !== undefined) {
+        // add types
+        types.map(name => {
+          if (prev.types.get(name) === undefined) {
+            prev.types.set(name, true);
+          }
+        })
+        // remove types
+        const type_iter = prev.types.keys();
+        let type_name = type_iter.next().value;
+        while (type_name !== undefined) {
+          if (types.indexOf(type_name) === -1) {
+            prev.types.delete(type_name);
+          }
+          type_name = type_iter.next().value;
+        }
+
+        // add generations
+        generations.map(gen => {
+          if (prev.generations.get(gen) === undefined) {
+            prev.generations.set(gen, true);
+          }
+        })
+        // remove generations
+        const gen_iter = prev.generations.keys();
+        let gen_name = gen_iter.next().value;
+        while (gen_name!== undefined) {
+          if (generations.indexOf(gen_name) === -1) {
+            prev.generations.delete(gen_name);
+          }
+          gen_name = gen_iter.next().value;
+        }
+        return prev;
+      } else {
+        return {
+          types: new Map(types.map(name => [name, true])),
+          generations: new Map(generations.map(gen => [gen, true]))
+        }
+      }
+    });
+
+    const newSelectedResources = resources!.current.filter(r =>
+        resourceTypes.types.get(r.type) && resourceTypes.generations.get(r.generation));
+    setSelectedResources(newSelectedResources);
+
+    const newSelectedEvents = events!.current.filter(e =>
+        newSelectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1)
+    setSelectedEvents(newSelectedEvents.map(e => {
+          return {
+            start: e.start,
+            end: e.end,
+            color: e.color,
+            id: e.id!.toString(),
+            title: e.resource_name!, // displays resource name 
+            extendedProps: { purpose_of_use: e.purpose_of_use },
+          }
+        }));
+  }
+
+  const onUpdateEvents = () => {
+    console.log("onUpdateEvents")
+    setSelectedEvents(events!.current.filter(e =>
+        selectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1).map(e => {
+          return {
+            start: e.start,
+            end: e.end,
+            color: e.color,
+            id: e.id!.toString(),
+            title: e.resource_name!, // displays resource name 
+            extendedProps: { purpose_of_use: e.purpose_of_use },
+          }
+        }))
+  }
+
   const currentEventContext = {
     events: events,
-    resources: resources
+    resources: resources,
+    resourceTypes: resourceTypes,
+    selectedEvents: selectedEvents,
+    selectedResources: selectedResources,
   };
+
   useEffect(() => {
+    console.log("useEffect of App.")
     const session = supabase.auth.session();
     //setUser(session?.user ?? null);
 
@@ -94,7 +211,6 @@ function App() {
     };
   }, [user]);
 
-
   return (
     <div className="min-w-full min-h-screen flex items-center justify-center bg-gray-200">
       {/*
@@ -104,8 +220,11 @@ function App() {
         <HeaderContext.Provider value={currentHeaderContext}>
           <EventContext.Provider value={currentEventContext}>
             <div className='demo-app'>
-              <Sidebar />
-              <Home user={new DummyUser()} />
+              <Sidebar
+                handleSelectChange={handleSelectChange} />
+              <Home user={new DummyUser()} 
+                onUpdateResources={onUpdateResources}
+                onUpdateEvents={onUpdateEvents}/>
             </div>
           </EventContext.Provider>
         </HeaderContext.Provider>

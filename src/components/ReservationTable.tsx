@@ -95,7 +95,7 @@ const ReservationTable = (props: {
   };
 
   const { user, setError } = useContext(HeaderContext);
-  const { events, resources } = useContext(EventContext);
+  const { events, resources, selectedResources } = useContext(EventContext);
 
   function ReserveTableToolBar() {
     const apiRef = useGridApiContext();
@@ -239,45 +239,15 @@ const ReservationTable = (props: {
     setGenCheckedState(genCheckedState.map((c, j)  => (i===j) ? event.target.checked : c));
   }
 
-  const selectedResources = useMemo(
-    () => 
-    resources!.current.filter(r => 
-      typeCheckedState[types.indexOf(r.type)] && genCheckedState[generations.indexOf(r.generation)])
-  , [resources, typeCheckedState, genCheckedState])
-
   const selectedEvents = useMemo(
     () =>
     events!.current.filter(e => 
-      selectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1)
-  , [events, typeCheckedState, genCheckedState])
+      selectedResources!.map(r => r.name).indexOf(e.resource_name!) !== -1)
+  , [events, selectedResources])
 
   return (
     <Stack spacing={5}>
       <h1> Reservation </h1>
-      <div hidden={false} className={"flex m-4 justify-center"} >
-        <Stack spacing={5} direction="row" >
-          <FormControl variant="standard">
-            <FormLabel component="legend">Select by Type</FormLabel>
-            <FormGroup aria-label="position" row>
-              {types.map((t, i) => (
-                <FormControlLabel control={
-                  <Checkbox checked={typeCheckedState[i]} onChange={handleSelectTypeChange.bind(null, i)} />
-                } label={t} key={`checkbox-type-select-${t}`} />
-              ))}
-            </FormGroup>
-          </FormControl>
-          <FormControl>
-            <FormLabel component="legend">Select by Generation</FormLabel>
-            <FormGroup aria-label="position" row>
-              {generations.map((g, i) => (
-                <FormControlLabel control={
-                  <Checkbox checked={genCheckedState[i]} onChange={handleSelectGenChange.bind(null, i)} />}
-                  label={g} key={`checkbox-gen-select-${g}`}/>
-              ))}
-            </FormGroup>
-          </FormControl>
-        </Stack>
-      </div>
       <div hidden={false} className={"flex m-4 justify-center"} >
         <BigCalendar
           components={components}
@@ -295,7 +265,7 @@ const ReservationTable = (props: {
           }) as []}
           step={60}
           resourceAccessor={"resource_id"}
-          resources={selectedResources}
+          resources={selectedResources!}
           resourceTitleAccessor={"name"}
           localizer={djLocalizer}
         />

@@ -14,9 +14,9 @@ const ResourceTable = (props: {
   setResourceAdding: (b: boolean) => void
   setResourceSynced: (b: boolean) => void
 }) => {
-  const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(5);
+  const [resourceTablePageSize, setResourceTablePageSize] = useState<number>(10);
   const { tab, setTab, errorText, setError } = useContext(HeaderContext)
-  const { events, resources } = useContext(EventContext);
+  const { events, resources, selectedResources } = useContext(EventContext);
 
   const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
      return <>
@@ -118,7 +118,7 @@ const ResourceTable = (props: {
           <Container sx={{ display: 'flex', justifyContent: 'center', width: '90%' }}>
             <Box sx={{ width: '100%' }}>
               <DataGrid
-                rows={resources!.current.map((r) => { return { ...r, "this": r } })}
+                rows={selectedResources!.map((r) => { return { ...r, "this": r } })}
                 columns={resourceTableColumns}
                 rowsPerPageOptions={[5, 10, 20, 50]}
                 pageSize={resourceTablePageSize}

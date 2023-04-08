@@ -16,7 +16,13 @@ import { getResourceName } from "../lib/resource-utils";
 import { strToTimestamp } from "../lib/event-utils";
 import { EventContext, HeaderContext } from "../App";
 
-const Home = ({ user }: { user: User }) => {
+interface HomeProps {
+    user: User;
+    onUpdateResources: () => void;
+    onUpdateEvents: () => void;
+};
+
+const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
@@ -57,18 +63,19 @@ const Home = ({ user }: { user: User }) => {
         if (result.type === "recovery") {
             setRecoveryToken(result.access_token);
         }
-
-        if (!eventSynced) {
-            console.log('calling fetch events')
-            fetchEvents().then((levents: IEvent[]) => {
-                events!.current = levents;
-                setEventSynced(true);
-            }).catch(setError)
-        }
         if (!resourceSynced) {
             console.log('calling fetch resources')
             fetchResources().catch(setError);
         }
+        if (!eventSynced) {
+            console.log('calling fetch events')
+            fetchEvents().then((new_events: IEvent[]) => {
+                events!.current = new_events;
+                setEventSynced(true);
+                onUpdateEvents();
+            }).catch(setError)
+        }
+
     }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
     const DBEventToIEvent = (db_event: any) => {
@@ -112,6 +119,7 @@ const Home = ({ user }: { user: User }) => {
             console.log("Resources: ", res);
             resources!.current = res as Resource[];
             setResourceSynced(true);
+            onUpdateResources();
         }
     };
 
@@ -195,7 +203,7 @@ const Home = ({ user }: { user: User }) => {
         <div className={"supabase-calendar-main"}>
             <Header />
             <Calendar
-                eventSynced={eventSynced}
+                eventSynced={eventSynced && resourceSynced}
                 setReservationInfo={setReservationInfo}
                 setEventSynced={setEventSynced} />
         </div>
