@@ -66,8 +66,7 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
         if (!resourceSynced) {
             console.log('calling fetch resources')
             fetchResources().catch(setError);
-        }
-        if (!eventSynced) {
+        } else if (!eventSynced) {
             console.log('calling fetch events')
             fetchEvents().then((new_events: IEvent[]) => {
                 events!.current = new_events;

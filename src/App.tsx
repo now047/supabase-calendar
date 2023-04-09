@@ -120,13 +120,10 @@ function App() {
           }
         })
         // remove types
-        const type_iter = prev.types.keys();
-        let type_name = type_iter.next().value;
-        while (type_name !== undefined) {
-          if (types.indexOf(type_name) === -1) {
-            prev.types.delete(type_name);
+        for (const type of prev.types.keys()) {
+          if (types.indexOf(type) === -1) {
+            prev.types.delete(type);
           }
-          type_name = type_iter.next().value;
         }
 
         // add generations
@@ -136,13 +133,10 @@ function App() {
           }
         })
         // remove generations
-        const gen_iter = prev.generations.keys();
-        let gen_name = gen_iter.next().value;
-        while (gen_name!== undefined) {
-          if (generations.indexOf(gen_name) === -1) {
-            prev.generations.delete(gen_name);
+        for (const gen of prev.generations.keys()) {
+          if (generations.indexOf(gen) === -1) {
+            prev.generations.delete(gen);
           }
-          gen_name = gen_iter.next().value;
         }
         return prev;
       } else {

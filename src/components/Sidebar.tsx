@@ -57,17 +57,11 @@ const Sidebar = (props: {
   }
 
   const formControlCheckbox = (kind: string) => {
-    console.log(kind);
     if (ctx.resourceTypes === undefined) return <></>
     const type_iter = (kind === 'type') ?
               ctx.resourceTypes!.types.entries() :
               ctx.resourceTypes!.generations.entries();
-    const keyValuePairs = [];
-    let key_value = type_iter.next().value;
-    while (key_value !== undefined) {
-      keyValuePairs.push(key_value);
-      key_value = type_iter.next().value;
-    }
+    const keyValuePairs = Array.from(type_iter);
 
     return <>
       {
@@ -107,6 +101,7 @@ const Sidebar = (props: {
               rows={ctx.selectedResources!.map((r) => { return { ...r, "this": r } })}
               columns={resourceTableColumns}
               rowsPerPageOptions={[25]}
+              pageSize={25}
               pagination
               autoHeight
               disableSelectionOnClick
