@@ -58,14 +58,14 @@ type EventContextType = {
           types: Map<string, boolean>,
           generations: Map<string, boolean>
         } | undefined,
-  selectedEvents: EventSourceInput;
+  eventUpdateCount: number;
   selectedResources: Resource[] | null;
 };
 const defaultEventContext: EventContextType = {
   events: null,
   resources: null,
   resourceTypes: {types: new Map<string, boolean>(), generations: new Map<string, boolean>()},
-  selectedEvents: [],
+  eventUpdateCount: 0,
   selectedResources: null
 };
 export const EventContext = createContext(defaultEventContext);
@@ -104,7 +104,7 @@ function App() {
   }
 
   const [selectedResources, setSelectedResources] = useState(resources!.current)
-  const [selectedEvents, setSelectedEvents ] = useState<EventSourceInput>([]);
+  const [eventUpdateCount, setEventUpdateCount] = useState(0);
 
   const onUpdateResources = () => {
     console.log("onUpdateResources")
@@ -151,40 +151,19 @@ function App() {
         resourceTypes.types.get(r.type) && resourceTypes.generations.get(r.generation));
     setSelectedResources(newSelectedResources);
 
-    const newSelectedEvents = events!.current.filter(e =>
-        newSelectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1)
-    setSelectedEvents(newSelectedEvents.map(e => {
-          return {
-            start: e.start,
-            end: e.end,
-            color: e.color,
-            id: e.id!.toString(),
-            title: e.resource_name!, // displays resource name 
-            extendedProps: { purpose_of_use: e.purpose_of_use },
-          }
-        }));
+    setEventUpdateCount((prev) => prev + 1);
   }
 
   const onUpdateEvents = () => {
     console.log("onUpdateEvents")
-    setSelectedEvents(events!.current.filter(e =>
-        selectedResources.map(r => r.name).indexOf(e.resource_name!) !== -1).map(e => {
-          return {
-            start: e.start,
-            end: e.end,
-            color: e.color,
-            id: e.id!.toString(),
-            title: e.resource_name!, // displays resource name 
-            extendedProps: { purpose_of_use: e.purpose_of_use },
-          }
-        }))
+    setEventUpdateCount((prev) => prev + 1);
   }
 
   const currentEventContext = {
     events: events,
     resources: resources,
     resourceTypes: resourceTypes,
-    selectedEvents: selectedEvents,
+    eventUpdateCount: eventUpdateCount,
     selectedResources: selectedResources,
   };
 

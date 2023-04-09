@@ -30,7 +30,7 @@ const Calendar = (props: {
   setEventSynced: (b: boolean) => void
 }) => {
   const { user, tab, setTab, errorText, setError } = useContext(HeaderContext)
-  const { events, resources, selectedResources, selectedEvents } = useContext(EventContext);
+  const { events, resources, selectedResources, eventUpdateCount } = useContext(EventContext);
   const [hoverEvent, setHoverEvent] = useState<[IEvent | null, NodeJS.Timeout]>([null, setTimeout(() => { }, 0)]);
 
   const businessHours = {
@@ -161,7 +161,6 @@ const Calendar = (props: {
 
   const handleUpdatedEvents = (updated_events: EventApi[]) => {
     let is_changed = false;
-    //selectedEvents!.map(e => {
     events!.current.map(e => {
       let ie = updated_events.find((ie, i, api) => { return Number(ie.id) == e.id })
       if (ie !== undefined && eventDiffers(e, ie)) {
@@ -171,6 +170,7 @@ const Calendar = (props: {
           purpose_of_use: ie.extendedProps.purpose_of_use,
           color: e.color,
           id: e.id,
+          //allDay: e.allDay,
           resource_id: e.resource_id
         }
         console.log('Update event:', e)
@@ -278,11 +278,11 @@ const Calendar = (props: {
             id: e.id!.toString(),
             title: e.resource_name!, // displays resource name 
             extendedProps: { purpose_of_use: e.purpose_of_use },
+            //allDay: true,
           }
         })
-  , [events, selectedResources])
+  , [events, selectedResources, eventUpdateCount])
 
-   
   return (
     <div className={"flex m-4 justify-center"}>
       <h1>Calendar</h1>
@@ -317,17 +317,7 @@ const Calendar = (props: {
         selectable={true}
         select={handleDateSelect}
         //eventContent={renderEventContent}
-        events={selectedEvents}
-       /*  events={events!.current!.map(e => {
-          return {
-            start: e.start,
-            end: e.end,
-            color: e.color,
-            id: e.id,
-            title: e.resource_name!, // displays resource name 
-            extendedProps: { purpose_of_use: e.purpose_of_use },
-          }
-        }) as EventSourceInput} */
+        events={selectedEventsMemo}
       />
       <Snackbar
         anchorOrigin={{ 'horizontal': 'center', 'vertical': 'bottom' }}
