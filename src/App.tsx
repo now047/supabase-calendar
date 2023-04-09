@@ -93,9 +93,9 @@ function App() {
 
   const handleSelectChange = (kind: string, name: string, checked: boolean) => {
     setResourceTypes(prev => {
-      if (kind === "type") {
+      if (kind === "types") {
         prev?.types.set(name, checked);
-      } else if (kind === "generation") {
+      } else if (kind === "generations") {
         prev?.generations.set(name, checked);
       }
       return prev;
