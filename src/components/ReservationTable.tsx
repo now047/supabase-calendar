@@ -87,6 +87,7 @@ const ReservationTable = (props: {
   setEventSynced: (b: boolean) => void,
 }) => {
   const [pageSize, setPageSize] = useState<number>(20);
+  const [showTable, setShowTable] = useState<boolean>(false);
   const renderDateString = (params: GridRenderCellParams<number>) => {
     if (params.value === undefined)
       return '-'
@@ -248,6 +249,8 @@ const ReservationTable = (props: {
   return (
     <Stack spacing={5}>
       <h1> Reservation </h1>
+      <Button size="small" onClick={() => setShowTable(!showTable)}>{showTable ? "Show timeline" : "Show table"}</Button>
+      { !showTable ? (
       <div hidden={false} className={"flex m-4 justify-center"} >
         <BigCalendar
           components={components}
@@ -270,6 +273,7 @@ const ReservationTable = (props: {
           localizer={djLocalizer}
         />
       </div>
+        ) : (
       <div className={"flex m-4 justify-center"}>
         <Container sx={{ display: 'flex', justifyContent: 'center', width: '90%' }}>
           <Box sx={{ width: '100%' }}>
@@ -289,6 +293,7 @@ const ReservationTable = (props: {
           </Box>
         </Container>
       </div>
+        )}
     </Stack>
   )
 }
