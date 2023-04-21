@@ -158,7 +158,7 @@ const Calendar = (props: {
                 event.event.end?.getTime() ?? dayjs("today").toDate().getTime(),
             purpose_of_use: event.event.extendedProps.purpose_of_use,
             resource_name: event.event.title,
-            resources: resources!.current,
+            resources: selectedResources!,
             resource_id: events!.current.filter((e) => {
                 return e.id! === Number(event.event.id);
             })[0].resource_id,
@@ -238,7 +238,7 @@ const Calendar = (props: {
             end: arg.end.getTime(),
             purpose_of_use: "",
             resource_name: "",
-            resources: resources!.current,
+            resources: selectedResources!,
             onClose: modifyEvent,
             onDelete: deleteEvent,
         };
