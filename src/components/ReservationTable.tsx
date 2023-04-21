@@ -244,7 +244,7 @@ const ReservationTable = (props: {
             //max: dayjs().endOf('day').subtract(1, 'hours').toDate(),
             //views: [Views.DAY, Views.AGENDA],
             //views: Object.keys(Views).map((k) => Views[k] as Views),
-            views: { day: true, agenda: true },
+            views: { day: true, week: true },
         }),
         []
     );
@@ -299,64 +299,76 @@ const ReservationTable = (props: {
     );
 
     return (
-        <Stack spacing={5}>
+        <>
             <h1> Reservation </h1>
-            <Button size="small" onClick={() => setShowTable(!showTable)}>
-                {showTable ? "Show timeline" : "Show table"}
+            <Button
+                variant="text"
+                size="small"
+                onClick={() => setShowTable(!showTable)}
+            >
+                {showTable ? "timeline view" : "table view"}
             </Button>
-            {!showTable ? (
-                <div hidden={false} className={"flex m-4 justify-center"}>
-                    <BigCalendar
-                        components={components}
-                        defaultDate={defaultDate}
-                        views={views}
-                        max={max}
-                        defaultView={Views.DAY}
-                        events={
-                            selectedEvents.map((e) => {
-                                return {
-                                    ...e,
-                                    title: e.purpose_of_use,
-                                    start: new Date(e.start),
-                                    end: new Date(e.end),
-                                };
-                            }) as []
-                        }
-                        step={60}
-                        resourceAccessor={"resource_id"}
-                        resources={selectedResources!}
-                        resourceTitleAccessor={"name"}
-                        localizer={djLocalizer}
-                    />
-                </div>
-            ) : (
-                <div className={"flex m-4 justify-center"}>
-                    <Container
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            width: "90%",
-                        }}
-                    >
-                        <Box sx={{ width: "100%" }}>
-                            <DataGrid
-                                rows={selectedEvents}
-                                columns={eventTableColumns}
-                                pageSize={pageSize}
-                                autoHeight
-                                rowsPerPageOptions={[10, 20, 50]}
-                                onPageSizeChange={(size) => setPageSize(size)}
-                                checkboxSelection
-                                disableSelectionOnClick
-                                components={{ Toolbar: ReserveTableToolBar }}
-                                experimentalFeatures={{ newEditingApi: true }}
-                                onCellDoubleClick={handleDubleClickOnTable}
-                            />
-                        </Box>
-                    </Container>
-                </div>
-            )}
-        </Stack>
+            <Stack spacing={5}>
+                {!showTable ? (
+                    <div hidden={false} className={"flex m-4 justify-center"}>
+                        <BigCalendar
+                            components={components}
+                            defaultDate={defaultDate}
+                            views={views}
+                            max={max}
+                            defaultView={Views.DAY}
+                            events={
+                                selectedEvents.map((e) => {
+                                    return {
+                                        ...e,
+                                        title: e.purpose_of_use,
+                                        start: new Date(e.start),
+                                        end: new Date(e.end),
+                                    };
+                                }) as []
+                            }
+                            step={60}
+                            resourceAccessor={"resource_id"}
+                            resources={selectedResources!}
+                            resourceTitleAccessor={"name"}
+                            localizer={djLocalizer}
+                        />
+                    </div>
+                ) : (
+                    <div className={"flex m-4 justify-center"}>
+                        <Container
+                            sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                width: "100%",
+                            }}
+                        >
+                            <Box sx={{ width: "100%" }}>
+                                <DataGrid
+                                    rows={selectedEvents}
+                                    columns={eventTableColumns}
+                                    pageSize={pageSize}
+                                    autoHeight
+                                    rowsPerPageOptions={[10, 20, 50]}
+                                    onPageSizeChange={(size) =>
+                                        setPageSize(size)
+                                    }
+                                    checkboxSelection
+                                    disableSelectionOnClick
+                                    components={{
+                                        Toolbar: ReserveTableToolBar,
+                                    }}
+                                    experimentalFeatures={{
+                                        newEditingApi: true,
+                                    }}
+                                    onCellDoubleClick={handleDubleClickOnTable}
+                                />
+                            </Box>
+                        </Container>
+                    </div>
+                )}
+            </Stack>
+        </>
     );
 };
 
