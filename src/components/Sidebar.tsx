@@ -192,8 +192,8 @@ const Sidebar = (props: {
                                 return { ...r, this: r };
                             })}
                             columns={resourceTableColumns}
-                            rowsPerPageOptions={[25]}
-                            pageSize={25}
+                            rowsPerPageOptions={[10]}
+                            pageSize={10}
                             pagination
                             autoHeight
                             disableSelectionOnClick
