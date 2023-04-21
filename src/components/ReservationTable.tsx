@@ -116,7 +116,7 @@ const ReservationTable = (props: {
     setEventSynced: (b: boolean) => void;
 }) => {
     const [pageSize, setPageSize] = useState<number>(20);
-    const [showTable, setShowTable] = useState<boolean>(false);
+    const [showTable, setShowTable] = useState<boolean>(true);
     const renderDateString = (params: GridRenderCellParams<number>) => {
         if (params.value === undefined) return "-";
         else return toLocalDateString(params.value);
