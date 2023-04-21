@@ -51,16 +51,18 @@ const ResourceTable = (props: {
                     overlap="circular"
                 >
                     <Avatar
+                        variant="rounded"
                         sx={{
                             bgcolor: colorMap.get(params.value!.display_color),
+                            fontSize: 12,
                             width: 24,
                             height: 24,
                         }}
                     >
-                        {params.value!.name[0]}
+                        {params.value!.name[0] + params.value!.type[0]}
                     </Avatar>
                 </Badge>
-                <Typography sx={{ padding: 1 }}>
+                <Typography sx={{ marginLeft: 1 }}>
                     {params.value!.name}
                 </Typography>
             </>
