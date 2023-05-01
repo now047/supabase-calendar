@@ -4,11 +4,11 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
-import IEvent from "../lib/event-utils"
+import IEvent from "../lib/event-utils";
 import ReserveDialog, { ReserveDialogProps } from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
-import Resource from "../lib/resource-utils"
-import Header from "./Header"
+import Resource from "../lib/resource-utils";
+import Header from "./Header";
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
@@ -20,15 +20,17 @@ interface HomeProps {
     user: User;
     onUpdateResources: () => void;
     onUpdateEvents: () => void;
-};
+}
 
 const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
-    const [reservationInfo, setReservationInfo] = useState<ReserveDialogProps | null>(null);
+    const [reservationInfo, setReservationInfo] =
+        useState<ReserveDialogProps | null>(null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const { tab, setTab, errorText, setError } = useContext(HeaderContext);
+    const { tab, setTab, eventFromDate, errorText, setError } =
+        useContext(HeaderContext);
     const { events, resources } = useContext(EventContext);
 
     interface IResults {
@@ -40,7 +42,7 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
     }
 
     useEffect(() => {
-        console.log("useEffect")
+        console.log("useEffect");
         /* Recovery url is of the form
          * <SITE_URL>#access_token=x&refresh_token=y&expires_in=z&token_type=bearer&type=recovery
          * Read more on https://supabase.com/docs/reference/javascript/reset-password-email#notes
@@ -64,17 +66,18 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
             setRecoveryToken(result.access_token);
         }
         if (!resourceSynced) {
-            console.log('calling fetch resources')
+            console.log("calling fetch resources");
             fetchResources().catch(setError);
         } else if (!eventSynced) {
-            console.log('calling fetch events')
-            fetchEvents().then((new_events: IEvent[]) => {
-                events!.current = new_events;
-                setEventSynced(true);
-                onUpdateEvents();
-            }).catch(setError)
+            console.log("calling fetch events");
+            fetchEvents()
+                .then((new_events: IEvent[]) => {
+                    events!.current = new_events;
+                    setEventSynced(true);
+                    onUpdateEvents();
+                })
+                .catch(setError);
         }
-
     }, [resourceSynced, eventSynced, errorText, reservationInfo]);
 
     const DBEventToIEvent = (db_event: any) => {
@@ -83,7 +86,10 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
             purpose_of_use: db_event.title,
             start: strToTimestamp(db_event.start),
             end: strToTimestamp(db_event.end),
-            resource_name: getResourceName(db_event.resource_id, resources!.current)
+            resource_name: getResourceName(
+                db_event.resource_id,
+                resources!.current
+            ),
         } as IEvent;
     };
 
@@ -98,6 +104,7 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
             let { data: events, error } = await supabase
                 .from("events")
                 .select("*")
+                .gte("end", eventFromDate.toISOString())
                 .order("id", { ascending: false });
             if (error) {
                 reject(error.message);
@@ -133,13 +140,13 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
                     type: r.type,
                     generation: r.generation,
                     display_color: r.display_color,
-                    note: r.note
+                    note: r.note,
                 })
                 .single();
             if (error) setError(error.message);
             else {
                 setResourceSynced(false);
-                console.log('Updated resources', resource)
+                console.log("Updated resources", resource);
                 setError(null);
             }
         } else {
@@ -151,7 +158,7 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
                     type: r.type,
                     generation: r.generation,
                     display_color: r.display_color,
-                    note: r.note
+                    note: r.note,
                 })
                 .single();
             if (error) setError(error.message);
@@ -160,14 +167,13 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
                 setError(null);
             }
         }
-    }
+    };
 
     const handleResourceDialogClose = (resource: Resource | null) => {
-        console.log("add resource")
+        console.log("add resource");
         setResourceAdding(false);
-        if (resource !== null)
-            addResource(resource)
-    }
+        if (resource !== null) addResource(resource);
+    };
 
     // render
     return recoveryToken ? (
@@ -181,42 +187,45 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
         </div>
     ) : resourceAdding ? (
         <div className={"supabase-calendar-main"}>
-            <ResourceDialog {
-                ...{
+            <ResourceDialog
+                {...{
                     name: "",
                     generation: "",
                     type: "",
                     open: true,
                     resources: resources!.current,
-                    onClose: handleResourceDialogClose
-                }} />
+                    onClose: handleResourceDialogClose,
+                }}
+            />
         </div>
-    ) : tab === 'Resource' ? (
+    ) : tab === "Resource" ? (
         <div className={"supabase-calendar-main"}>
-            <Header />
+            <Header setEventSynced={setEventSynced} />
             <ResourceTable
                 setResourceAdding={setResourceAdding}
-                setResourceSynced={setResourceSynced} />
+                setResourceSynced={setResourceSynced}
+            />
         </div>
-    ) : tab === 'Calendar' ? (
+    ) : tab === "Calendar" ? (
         <div className={"supabase-calendar-main"}>
-            <Header />
+            <Header setEventSynced={setEventSynced} />
             <Calendar
                 eventSynced={eventSynced && resourceSynced}
                 setReservationInfo={setReservationInfo}
-                setEventSynced={setEventSynced} />
+                setEventSynced={setEventSynced}
+            />
         </div>
-    ) : tab === 'Reservation' ? (
+    ) : tab === "Reservation" ? (
         <div className={"supabase-calendar-main"}>
-            <Header />
+            <Header setEventSynced={setEventSynced} />
             <ReservationTable
                 setReservationInfo={setReservationInfo}
                 setEventSynced={setEventSynced}
-                />
+            />
         </div>
     ) : (
         <>{handleLogout()}</>
-    )
+    );
 };
 
 export default Home;

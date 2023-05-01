@@ -9,18 +9,7 @@ import {
     GridToolbarContainer,
     useGridApiContext,
 } from "@mui/x-data-grid";
-import {
-    Box,
-    Button,
-    Checkbox,
-    FormControl,
-    FormControlLabel,
-    FormGroup,
-    FormLabel,
-    Radio,
-    RadioGroup,
-    Stack,
-} from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 
 import { supabase } from "../lib/api";
 import { toLocalDateString } from "../lib/event-utils";
@@ -123,7 +112,8 @@ const ReservationTable = (props: {
     };
 
     const { user, setError } = useContext(HeaderContext);
-    const { events, resources, selectedResources } = useContext(EventContext);
+    const { events, resources, selectedResources, eventUpdateCount } =
+        useContext(EventContext);
 
     function ReserveTableToolBar() {
         const apiRef = useGridApiContext();
@@ -295,7 +285,7 @@ const ReservationTable = (props: {
                         .map((r) => r.name)
                         .indexOf(e.resource_name!) !== -1
             ),
-        [events, selectedResources]
+        [events, eventUpdateCount, selectedResources]
     );
 
     return (

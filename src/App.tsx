@@ -5,6 +5,7 @@ import React, {
     useRef,
     useMemo,
 } from "react";
+import dayjs from "dayjs";
 import { supabase } from "./lib/api";
 import Auth from "./components/Auth";
 import Home from "./components/Home";
@@ -49,6 +50,8 @@ type HeaderContextType = {
     user: User | null;
     tab: TabLabel;
     setTab: (t: TabLabel) => void;
+    eventFromDate: dayjs.Dayjs;
+    setEventFromDate: (d: dayjs.Dayjs) => void;
     errorText: string | null;
     setError: (e: string | null) => void;
 };
@@ -57,6 +60,8 @@ const defaultHeaderContext: HeaderContextType = {
     user: new DummyUser(),
     tab: "Calendar",
     setTab: (t: TabLabel) => {},
+    eventFromDate: dayjs(),
+    setEventFromDate: (d: dayjs.Dayjs) => {},
     errorText: "",
     setError: (s: string | null) => {},
 };
@@ -89,12 +94,16 @@ const defaultEventContext: EventContextType = {
 export const EventContext = createContext(defaultEventContext);
 
 function App() {
+    const today = new Date();
     const [user, setUser] = useState<User | null>(new DummyUser());
     const [errorText, setError] = useState<string | null>("");
     const [tab, setTab] = useState<TabLabel>("Calendar");
     const [hue, setHue] = useState<number>(5);
     const events = useRef<IEvent[]>([]);
     const resources = useRef<Resource[]>([]);
+    const [eventFromDate, setEventFromDate] = useState(
+        dayjs().subtract(1, "month")
+    );
 
     const colors = useMemo(() => colorMap(hue), [hue]);
 
@@ -102,6 +111,8 @@ function App() {
         user,
         tab,
         setTab,
+        eventFromDate,
+        setEventFromDate,
         errorText,
         setError,
     };
