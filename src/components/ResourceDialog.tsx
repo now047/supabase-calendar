@@ -12,7 +12,6 @@ import Dialog from "@mui/material/Dialog";
 import PersonIcon from "@mui/icons-material/Person";
 import AddIcon from "@mui/icons-material/Add";
 import Typography from "@mui/material/Typography";
-import { blue } from "@mui/material/colors";
 import TextField from "@mui/material/TextField";
 import Input from "@mui/material/Input";
 import InputLabel from "@mui/material/InputLabel";
@@ -39,7 +38,8 @@ import { useTimePickerDefaultizedProps } from "@mui/x-date-pickers/TimePicker/sh
 
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import IEvent from "../lib/event-utils";
-import Resource, { colorMap } from "../lib/resource-utils";
+import Resource from "../lib/resource-utils";
+import { EventContext } from "../App";
 
 export interface ResourceDialogProps {
     id?: string;
@@ -54,13 +54,14 @@ export interface ResourceDialogProps {
 }
 
 const ReserveDialog = (props: ResourceDialogProps) => {
+    const { colors } = React.useContext(EventContext);
     const [name, setName] = React.useState(props.name);
     const [nameError, setNameError] = React.useState(false);
     const [type, setType] = React.useState(props.type);
     const [generation, setGeneration] = React.useState(props.generation);
     const [note, setNote] = React.useState(props.note);
     const [colorList, setColorList] = React.useState(
-        Array.from(colorMap).filter(
+        Array.from(colors!).filter(
             (kv) => !props.resources.map((r) => r.display_color).includes(kv[0])
         )
     );

@@ -20,7 +20,7 @@ import {
 import { supabase } from "../lib/api";
 
 import { EventContext, HeaderContext } from "../App";
-import Resource, { colorMap } from "../lib/resource-utils";
+import Resource from "../lib/resource-utils";
 
 const ResourceTable = (props: {
     setResourceAdding: (b: boolean) => void;
@@ -29,7 +29,8 @@ const ResourceTable = (props: {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
     const { tab, setTab, errorText, setError } = useContext(HeaderContext);
-    const { events, resources, selectedResources } = useContext(EventContext);
+    const { events, resources, selectedResources, colors } =
+        useContext(EventContext);
 
     const numEventsForSpecificResource = (id: number) => {
         let count = 0;
@@ -53,7 +54,7 @@ const ResourceTable = (props: {
                     <Avatar
                         variant="rounded"
                         sx={{
-                            bgcolor: colorMap.get(params.value!.display_color),
+                            bgcolor: colors!.get(params.value!.display_color),
                             fontSize: 12,
                             width: 24,
                             height: 24,

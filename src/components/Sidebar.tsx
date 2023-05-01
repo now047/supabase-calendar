@@ -12,6 +12,7 @@ import {
     InputLabel,
     OutlinedInput,
     MenuItem,
+    Slider,
 } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
@@ -19,7 +20,6 @@ import Chip from "@mui/material/Chip";
 import { Avatar } from "@mui/material";
 import { Typography } from "@mui/material";
 
-import { colorMap } from "../lib/resource-utils";
 import Resource from "../lib/resource-utils";
 import { EventContext } from "../App";
 
@@ -27,6 +27,7 @@ import { Theme, useTheme } from "@mui/material/styles";
 
 const Sidebar = (props: {
     handleSelectChange: (k: string, n: string, v: boolean) => void;
+    handleColorChange: (id: number) => void;
 }) => {
     const ctx = useContext(EventContext);
 
@@ -36,7 +37,7 @@ const Sidebar = (props: {
                 <Avatar
                     variant="rounded"
                     sx={{
-                        bgcolor: colorMap.get(params.value!.display_color),
+                        bgcolor: ctx.colors!.get(params.value!.display_color),
                         fontSize: 12,
                         width: 24,
                         height: 24,
@@ -44,19 +45,21 @@ const Sidebar = (props: {
                 >
                     {params.value!.name[0] + params.value!.type[0]}
                 </Avatar>
-                <Typography sx={{ marginLeft: 1 }}>
-                    {params.value!.name}
-                </Typography>
             </>
         );
     };
     const resourceTableColumns: GridColDef[] = [
         {
             field: "this",
-            headerName: "Resource",
-            width: 200,
+            headerName: "Icon",
+            width: 30,
             editable: false,
             renderCell: resourceAvatar,
+        },
+        {
+            headerName: "Name",
+            field: "name",
+            width: 200,
         },
     ];
 
@@ -135,6 +138,17 @@ const Sidebar = (props: {
         });
     };
 
+    const handleSelectColorChange = (
+        event: Event,
+        value: number | number[],
+        activeThumb: number
+    ) => {
+        if (Array.isArray(value)) {
+            return;
+        }
+        props.handleColorChange(value);
+    };
+
     const renderTypeSelectForm = (kind: ResourceProparty) => {
         return (
             <FormControl sx={{ m: 1, width: 230 }}>
@@ -197,6 +211,32 @@ const Sidebar = (props: {
                             pagination
                             autoHeight
                             disableSelectionOnClick
+                        />
+                    </Box>
+                </Container>
+                <Container
+                    sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        width: "100%",
+                    }}
+                >
+                    <Box sx={{ width: "94%" }}>
+                        <Typography
+                            gutterBottom
+                            fontSize={12}
+                            sx={{ marginTop: 4 }}
+                        >
+                            Select your favorite color !
+                        </Typography>
+                        <Slider
+                            aria-label="color-select"
+                            max={13}
+                            min={0}
+                            defaultValue={5}
+                            color="secondary"
+                            size="small"
+                            onChange={handleSelectColorChange}
                         />
                     </Box>
                 </Container>

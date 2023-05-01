@@ -28,11 +28,7 @@ import IEvent, {
     strToTimestamp,
     toLocalDateString,
 } from "../lib/event-utils";
-import {
-    colorMap,
-    getResourceId,
-    getResourceName,
-} from "../lib/resource-utils";
+import { getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
 import { EventContext, HeaderContext } from "../App";
 
@@ -43,7 +39,7 @@ const Calendar = (props: {
 }) => {
     const { user, tab, setTab, errorText, setError } =
         useContext(HeaderContext);
-    const { events, resources, selectedResources, eventUpdateCount } =
+    const { events, resources, selectedResources, eventUpdateCount, colors } =
         useContext(EventContext);
     const [hoverEvent, setHoverEvent] = useState<
         [IEvent | null, NodeJS.Timeout]
@@ -60,9 +56,18 @@ const Calendar = (props: {
     };
 
     const getResouceColor = (id: number) =>
-        colorMap.get(
+        colors!.get(
             resources!.current.filter((r) => r.id === id)[0].display_color
         );
+
+    const getResourceId = (color: string) => {
+        colors!.forEach((col) => {
+            if (col[1] === color) {
+                return col[0];
+            }
+        });
+        return 1;
+    };
 
     const DBEventToIEvent = (db_event: any) => {
         return {
@@ -325,7 +330,7 @@ const Calendar = (props: {
                         //allDay: true,
                     };
                 }),
-        [events, selectedResources, eventUpdateCount]
+        [events, selectedResources, eventUpdateCount, colors]
     );
 
     return (

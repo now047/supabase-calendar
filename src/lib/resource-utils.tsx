@@ -1,63 +1,80 @@
 import {
-  red, pink, purple, deepPurple,
-  indigo, blue, lightBlue, cyan,
-  teal, green, lightGreen, lime,
-  yellow, amber, orange, deepOrange,
-  brown, grey, blueGrey
-} from '@mui/material/colors';
+    red,
+    pink,
+    purple,
+    deepPurple,
+    indigo,
+    blue,
+    lightBlue,
+    cyan,
+    teal,
+    green,
+    lightGreen,
+    lime,
+    yellow,
+    amber,
+    orange,
+    deepOrange,
+    brown,
+    grey,
+    blueGrey,
+} from "@mui/material/colors";
 
-const hue = 500;
-export const colorMap = new Map(
-  [
-    [1, red[hue]],
-    [2, pink[hue]],
-    [3, purple[hue]],
-    [4, deepPurple[hue]],
-    [5, indigo[hue]],
-    [6, blue[hue]],
-    [7, lightBlue[hue]],
-    [8, cyan[hue]],
-    [9, teal[hue]],
-    [10, green[hue]],
-    [11, lightGreen[hue]],
-    [12, lime[hue]],
-    [13, yellow[hue]],
-    [14, amber[hue]],
-    [15, orange[hue]],
-    [16, deepOrange[hue]],
-    [17, brown[hue]],
-    [18, grey[hue]],
-    [19, blueGrey[hue]]
-  ]
-);
+type HueKeys =
+    | "50"
+    | "100"
+    | "200"
+    | "300"
+    | "400"
+    | "500"
+    | "600"
+    | "700"
+    | "800"
+    | "900"
+    | "A100"
+    | "A200"
+    | "A400"
+    | "A700";
+
+const keys = Object.keys(red) as HueKeys[];
+
+export const colorMap = (col: number) =>
+    new Map([
+        [1, red[keys[col]]],
+        [2, pink[keys[col]]],
+        [3, purple[keys[col]]],
+        [4, deepPurple[keys[col]]],
+        [5, indigo[keys[col]]],
+        [6, blue[keys[col]]],
+        [7, lightBlue[keys[col]]],
+        [8, cyan[keys[col]]],
+        [9, teal[keys[col]]],
+        [10, green[keys[col]]],
+        [11, lightGreen[keys[col]]],
+        [12, lime[keys[col]]],
+        [13, yellow[keys[col]]],
+        [14, amber[keys[col]]],
+        [15, orange[keys[col]]],
+        [16, deepOrange[keys[col]]],
+        [17, brown[keys[col]]],
+        [18, grey[keys[col]]],
+        [19, blueGrey[keys[col]]],
+    ]);
 
 export default interface Resource {
-  id: number;
-  name: string;
-  type: string;
-  generation: string;
-  note: string;
-  display_color: number;
-}
-
-export const getResouceColor = (id: number, resources: Resource[]) => {
-  return colorMap.get(resources.filter(r => r.id === id)[0].display_color);
+    id: number;
+    name: string;
+    type: string;
+    generation: string;
+    note: string;
+    display_color: number;
 }
 
 export const getResourceName = (id: number, resources: Resource[]) => {
-  const ret = resources.filter((r) => r.id === id)
-  if (ret !== undefined && (ret as []).length !== 0){
-    return ret[0].name;
-  } else {
-    return 'Unknown-' + id.toString();
-  }
-}
-
-export const getResourceId = (color: string) => {
-  colorMap.forEach((r) => {
-    if (r[1] === color) {
-      return r[0];
+    const ret = resources.filter((r) => r.id === id);
+    if (ret !== undefined && (ret as []).length !== 0) {
+        return ret[0].name;
+    } else {
+        return "Unknown-" + id.toString();
     }
-  })
-  return 1;
-}
+};

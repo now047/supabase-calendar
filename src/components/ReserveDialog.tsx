@@ -17,7 +17,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 
 import IEvent from "../lib/event-utils";
-import Resource, { colorMap } from "../lib/resource-utils";
+import Resource from "../lib/resource-utils";
+import { EventContext } from "../App";
 
 export interface ReserveDialogProps {
     id?: string;
@@ -34,6 +35,7 @@ export interface ReserveDialogProps {
 }
 
 const ReserveDialog = (props: ReserveDialogProps) => {
+    const { colors } = React.useContext(EventContext);
     const [user, setUser] = React.useState(props.user);
     const [resource_id, setResourceId] = React.useState<number>(
         props.resource_id ?? 1
@@ -176,7 +178,7 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{
-                                                    bgcolor: colorMap.get(
+                                                    bgcolor: colors!.get(
                                                         r.display_color
                                                     ),
                                                     fontSize: 12,
