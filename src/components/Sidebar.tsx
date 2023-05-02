@@ -18,12 +18,14 @@ import Resource from "../lib/resource-utils";
 import { EventContext } from "../App";
 
 import { Theme, useTheme } from "@mui/material/styles";
+import { useColor } from "../contexts/ColorContext";
 
 const Sidebar = (props: {
     handleSelectChange: (k: string, n: string, v: boolean) => void;
-    handleColorChange: (id: number) => void;
 }) => {
     const ctx = useContext(EventContext);
+
+    const { colors, setHue } = useColor();
 
     const resourceAvatar = (params: GridRenderCellParams<Resource>) => {
         return (
@@ -31,7 +33,7 @@ const Sidebar = (props: {
                 <Avatar
                     variant="rounded"
                     sx={{
-                        bgcolor: ctx.colors!.get(params.value!.display_color),
+                        bgcolor: colors.get(params.value!.display_color),
                         fontSize: 12,
                         width: 24,
                         height: 24,
@@ -140,7 +142,8 @@ const Sidebar = (props: {
         if (Array.isArray(value)) {
             return;
         }
-        props.handleColorChange(value);
+        //props.handleColorChange(value);
+        setHue(value);
     };
 
     const renderTypeSelectForm = (kind: ResourceProparty) => {

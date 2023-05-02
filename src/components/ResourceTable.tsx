@@ -21,6 +21,7 @@ import { supabase } from "../lib/api";
 
 import { EventContext, HeaderContext } from "../App";
 import Resource from "../lib/resource-utils";
+import { useColor } from "../contexts/ColorContext";
 
 const ResourceTable = (props: {
     setResourceAdding: (b: boolean) => void;
@@ -29,8 +30,9 @@ const ResourceTable = (props: {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
     const { tab, setTab, errorText, setError } = useContext(HeaderContext);
-    const { events, resources, selectedResources, colors } =
-        useContext(EventContext);
+    const { events, resources, selectedResources } = useContext(EventContext);
+
+    const { colors } = useColor();
 
     const numEventsForSpecificResource = (id: number) => {
         let count = 0;

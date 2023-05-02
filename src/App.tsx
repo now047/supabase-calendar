@@ -20,7 +20,7 @@ import IEvent from "./lib/event-utils";
 import { TabLabel } from "./components/Header";
 import Resource from "./lib/resource-utils";
 import { EventSourceInput } from "@fullcalendar/core";
-import { colorMap } from "./lib/resource-utils";
+import { ColorContextProvider } from "./contexts/ColorContext";
 
 class DummyUAM implements UserAppMetadata {
     provider?: string;
@@ -78,7 +78,6 @@ type EventContextType = {
         | undefined;
     eventUpdateCount: number;
     selectedResources: Resource[] | null;
-    colors: Map<any, string> | null;
 };
 const defaultEventContext: EventContextType = {
     events: null,
@@ -89,7 +88,6 @@ const defaultEventContext: EventContextType = {
     },
     eventUpdateCount: 0,
     selectedResources: null,
-    colors: null,
 };
 export const EventContext = createContext(defaultEventContext);
 
@@ -98,14 +96,11 @@ function App() {
     const [user, setUser] = useState<User | null>(new DummyUser());
     const [errorText, setError] = useState<string | null>("");
     const [tab, setTab] = useState<TabLabel>("Calendar");
-    const [hue, setHue] = useState<number>(5);
     const events = useRef<IEvent[]>([]);
     const resources = useRef<Resource[]>([]);
     const [eventFromDate, setEventFromDate] = useState(
         dayjs().subtract(1, "month")
     );
-
-    const colors = useMemo(() => colorMap(hue), [hue]);
 
     const currentHeaderContext = {
         user,
@@ -212,7 +207,6 @@ function App() {
         resourceTypes: resourceTypes,
         eventUpdateCount: eventUpdateCount,
         selectedResources: selectedResources,
-        colors: colors,
     };
 
     useEffect(() => {
@@ -240,17 +234,18 @@ function App() {
             {
                 <HeaderContext.Provider value={currentHeaderContext}>
                     <EventContext.Provider value={currentEventContext}>
-                        <div className="demo-app">
-                            <Sidebar
-                                handleSelectChange={handleSelectChange}
-                                handleColorChange={setHue}
-                            />
-                            <Home
-                                user={new DummyUser()}
-                                onUpdateResources={onUpdateResources}
-                                onUpdateEvents={onUpdateEvents}
-                            />
-                        </div>
+                        <ColorContextProvider>
+                            <div className="demo-app">
+                                <Sidebar
+                                    handleSelectChange={handleSelectChange}
+                                />
+                                <Home
+                                    user={new DummyUser()}
+                                    onUpdateResources={onUpdateResources}
+                                    onUpdateEvents={onUpdateEvents}
+                                />
+                            </div>
+                        </ColorContextProvider>
                     </EventContext.Provider>
                 </HeaderContext.Provider>
             }

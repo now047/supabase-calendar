@@ -40,6 +40,7 @@ import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import IEvent from "../lib/event-utils";
 import Resource from "../lib/resource-utils";
 import { EventContext } from "../App";
+import { useColor } from "../contexts/ColorContext";
 
 export interface ResourceDialogProps {
     id?: string;
@@ -54,14 +55,14 @@ export interface ResourceDialogProps {
 }
 
 const ReserveDialog = (props: ResourceDialogProps) => {
-    const { colors } = React.useContext(EventContext);
+    const { colors } = useColor();
     const [name, setName] = React.useState(props.name);
     const [nameError, setNameError] = React.useState(false);
     const [type, setType] = React.useState(props.type);
     const [generation, setGeneration] = React.useState(props.generation);
     const [note, setNote] = React.useState(props.note);
     const [colorList, setColorList] = React.useState(
-        Array.from(colors!).filter(
+        Array.from(colors).filter(
             (kv) => !props.resources.map((r) => r.display_color).includes(kv[0])
         )
     );

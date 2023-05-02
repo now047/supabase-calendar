@@ -31,6 +31,7 @@ import IEvent, {
 import { getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
 import { EventContext, HeaderContext } from "../App";
+import { useColor } from "../contexts/ColorContext";
 
 const Calendar = (props: {
     eventSynced: boolean;
@@ -39,8 +40,9 @@ const Calendar = (props: {
 }) => {
     const { user, tab, setTab, errorText, setError } =
         useContext(HeaderContext);
-    const { events, resources, selectedResources, eventUpdateCount, colors } =
+    const { events, resources, selectedResources, eventUpdateCount } =
         useContext(EventContext);
+    const { colors } = useColor();
     const [hoverEvent, setHoverEvent] = useState<
         [IEvent | null, NodeJS.Timeout]
     >([null, setTimeout(() => {}, 0)]);
@@ -56,12 +58,12 @@ const Calendar = (props: {
     };
 
     const getResouceColor = (id: number) =>
-        colors!.get(
+        colors.get(
             resources!.current.filter((r) => r.id === id)[0].display_color
         );
 
     const getResourceId = (color: string) => {
-        colors!.forEach((col) => {
+        colors.forEach((col) => {
             if (col[1] === color) {
                 return col[0];
             }
