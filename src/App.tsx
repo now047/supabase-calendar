@@ -92,16 +92,12 @@ const defaultEventContext: EventContextType = {
 export const EventContext = createContext(defaultEventContext);
 
 function App() {
-    const today = new Date();
     const [user, setUser] = useState<User | null>(new DummyUser());
     const [errorText, setError] = useState<string | null>("");
     const [tab, setTab] = useState<TabLabel>("Calendar");
-    const events = useRef<IEvent[]>([]);
-    const resources = useRef<Resource[]>([]);
     const [eventFromDate, setEventFromDate] = useState(
         dayjs().subtract(1, "month")
     );
-
     const currentHeaderContext = {
         user,
         tab,
@@ -112,6 +108,8 @@ function App() {
         setError,
     };
 
+    const events = useRef<IEvent[]>([]);
+    const resources = useRef<Resource[]>([]);
     const [resourceTypes, setResourceTypes] = useState<{
         types: Map<string, boolean>;
         generations: Map<string, boolean>;
@@ -153,9 +151,9 @@ function App() {
         setResourceTypes((prev) => {
             if (prev !== undefined) {
                 // add types
-                types.map((name) => {
-                    if (prev.types.get(name) === undefined) {
-                        prev.types.set(name, true);
+                types.map((type) => {
+                    if (prev.types.get(type) === undefined) {
+                        prev.types.set(type, true);
                     }
                 });
                 // remove types
@@ -180,7 +178,7 @@ function App() {
                 return prev;
             } else {
                 return {
-                    types: new Map(types.map((name) => [name, true])),
+                    types: new Map(types.map((type) => [type, true])),
                     generations: new Map(generations.map((gen) => [gen, true])),
                 };
             }

@@ -100,8 +100,7 @@ const Sidebar = (props: {
                     theme
                 )}
             >
-                {" "}
-                {k}{" "}
+                {k}
             </MenuItem>
         ));
     };

@@ -147,8 +147,12 @@ const ResourceTable = (props: {
     const deleteResource = async (id: string | undefined) => {
         if (id) {
             let res = await supabase.from("resources").delete().eq("id", id);
-            props.setResourceSynced(false);
-            setError(null);
+            if (res.error !== null) {
+                setError(res.error.details);
+            } else {
+                props.setResourceSynced(false);
+                setError(null);
+            }
         }
     };
 
