@@ -19,11 +19,11 @@ import { EventContext } from "../App";
 
 import { Theme, useTheme } from "@mui/material/styles";
 import { useColor } from "../contexts/ColorContext";
+import { useResource } from "../contexts/ResourceContext";
 
-const Sidebar = (props: {
-    handleSelectChange: (k: string, n: string, v: boolean) => void;
-}) => {
-    const ctx = useContext(EventContext);
+const Sidebar = () => {
+    const { resourceTypes, selectedResources, handleSelectChange } =
+        useResource();
 
     const { colors, setHue } = useColor();
 
@@ -87,14 +87,14 @@ const Sidebar = (props: {
 
     type ResourceProparty = "types" | "generations";
     const renderTypeMenueItm = (kind: ResourceProparty) => {
-        const keys = Array.from(ctx.resourceTypes![kind].keys());
+        const keys = Array.from(resourceTypes[kind].keys());
         return keys.map((k) => (
             <MenuItem
                 key={k}
                 value={k}
                 style={getStyles(
                     k,
-                    Array.from(ctx.resourceTypes![kind].entries())
+                    Array.from(resourceTypes[kind].entries())
                         .filter((kv) => kv[1])
                         .map((kv) => kv[0]),
                     theme
@@ -115,20 +115,20 @@ const Sidebar = (props: {
 
         //
         const selected = typeof value === "string" ? value.split(",") : value;
-        const not_selected = Array.from(ctx.resourceTypes![kind].keys()).filter(
+        const not_selected = Array.from(resourceTypes[kind].keys()).filter(
             (s) => selected.indexOf(s) === -1
         );
         console.log("selected", selected);
         console.log("not_selected", not_selected);
 
         selected.forEach((v) => {
-            if (ctx.resourceTypes![kind].get(v) === false) {
-                props.handleSelectChange(kind, v, true);
+            if (resourceTypes[kind].get(v) === false) {
+                handleSelectChange(kind, v, true);
             }
         });
         not_selected.forEach((v) => {
-            if (ctx.resourceTypes![kind].get(v) === true) {
-                props.handleSelectChange(kind, v, false);
+            if (resourceTypes[kind].get(v) === true) {
+                handleSelectChange(kind, v, false);
             }
         });
     };
@@ -141,7 +141,6 @@ const Sidebar = (props: {
         if (Array.isArray(value)) {
             return;
         }
-        //props.handleColorChange(value);
         setHue(value);
     };
 
@@ -155,7 +154,7 @@ const Sidebar = (props: {
                     labelId={"select-label-" + kind}
                     id={"select-" + kind}
                     multiple
-                    value={Array.from(ctx.resourceTypes![kind].entries())
+                    value={Array.from(resourceTypes[kind].entries())
                         .filter((kv) => kv[1])
                         .map((kv) => kv[0])}
                     onChange={handleTypesChange.bind(null, kind)}
@@ -198,7 +197,7 @@ const Sidebar = (props: {
                 >
                     <Box sx={{ width: "100%" }}>
                         <DataGrid
-                            rows={ctx.selectedResources!.map((r) => {
+                            rows={selectedResources.map((r) => {
                                 return { ...r, this: r };
                             })}
                             columns={resourceTableColumns}

@@ -1,10 +1,4 @@
-import React, {
-    createContext,
-    useState,
-    useEffect,
-    useRef,
-    useMemo,
-} from "react";
+import React, { createContext, useState, useEffect, useRef } from "react";
 import dayjs from "dayjs";
 import { supabase } from "./lib/api";
 import Auth from "./components/Auth";
@@ -18,9 +12,8 @@ import type {
 
 import IEvent from "./lib/event-utils";
 import { TabLabel } from "./components/Header";
-import Resource from "./lib/resource-utils";
-import { EventSourceInput } from "@fullcalendar/core";
 import { ColorContextProvider } from "./contexts/ColorContext";
+import { ResourceContextProvider } from "./contexts/ResourceContext";
 
 class DummyUAM implements UserAppMetadata {
     provider?: string;
@@ -69,25 +62,11 @@ export const HeaderContext = createContext(defaultHeaderContext);
 
 type EventContextType = {
     events: React.MutableRefObject<IEvent[]> | null;
-    resources: React.MutableRefObject<Resource[]> | null;
-    resourceTypes:
-        | {
-              types: Map<string, boolean>;
-              generations: Map<string, boolean>;
-          }
-        | undefined;
     eventUpdateCount: number;
-    selectedResources: Resource[] | null;
 };
 const defaultEventContext: EventContextType = {
     events: null,
-    resources: null,
-    resourceTypes: {
-        types: new Map<string, boolean>(),
-        generations: new Map<string, boolean>(),
-    },
     eventUpdateCount: 0,
-    selectedResources: null,
 };
 export const EventContext = createContext(defaultEventContext);
 
@@ -109,90 +88,7 @@ function App() {
     };
 
     const events = useRef<IEvent[]>([]);
-    const resources = useRef<Resource[]>([]);
-    const [resourceTypes, setResourceTypes] = useState<{
-        types: Map<string, boolean>;
-        generations: Map<string, boolean>;
-    }>({
-        types: new Map<string, boolean>(),
-        generations: new Map<string, boolean>(),
-    });
-
-    const handleSelectChange = (
-        kind: string,
-        name: string,
-        checked: boolean
-    ) => {
-        setResourceTypes((prev) => {
-            if (kind === "types") {
-                prev?.types.set(name, checked);
-            } else if (kind === "generations") {
-                prev?.generations.set(name, checked);
-            }
-            return prev;
-        });
-        onUpdateResources();
-    };
-
-    const [selectedResources, setSelectedResources] = useState(
-        resources!.current
-    );
     const [eventUpdateCount, setEventUpdateCount] = useState(0);
-
-    const onUpdateResources = () => {
-        console.log("onUpdateResources");
-        const types = resources!.current
-            .map((r) => r.type)
-            .filter((v, i, a) => a.indexOf(v) === i);
-        const generations = resources!.current
-            .map((r) => r.generation)
-            .filter((v, i, a) => a.indexOf(v) === i);
-
-        setResourceTypes((prev) => {
-            if (prev !== undefined) {
-                // add types
-                types.map((type) => {
-                    if (prev.types.get(type) === undefined) {
-                        prev.types.set(type, true);
-                    }
-                });
-                // remove types
-                for (const type of prev.types.keys()) {
-                    if (types.indexOf(type) === -1) {
-                        prev.types.delete(type);
-                    }
-                }
-
-                // add generations
-                generations.map((gen) => {
-                    if (prev.generations.get(gen) === undefined) {
-                        prev.generations.set(gen, true);
-                    }
-                });
-                // remove generations
-                for (const gen of prev.generations.keys()) {
-                    if (generations.indexOf(gen) === -1) {
-                        prev.generations.delete(gen);
-                    }
-                }
-                return prev;
-            } else {
-                return {
-                    types: new Map(types.map((type) => [type, true])),
-                    generations: new Map(generations.map((gen) => [gen, true])),
-                };
-            }
-        });
-
-        const newSelectedResources = resources!.current.filter(
-            (r) =>
-                resourceTypes.types.get(r.type) &&
-                resourceTypes.generations.get(r.generation)
-        );
-        setSelectedResources(newSelectedResources);
-
-        setEventUpdateCount((prev) => prev + 1);
-    };
 
     const onUpdateEvents = () => {
         console.log("onUpdateEvents");
@@ -201,10 +97,7 @@ function App() {
 
     const currentEventContext = {
         events: events,
-        resources: resources,
-        resourceTypes: resourceTypes,
         eventUpdateCount: eventUpdateCount,
-        selectedResources: selectedResources,
     };
 
     useEffect(() => {
@@ -233,16 +126,15 @@ function App() {
                 <HeaderContext.Provider value={currentHeaderContext}>
                     <EventContext.Provider value={currentEventContext}>
                         <ColorContextProvider>
-                            <div className="demo-app">
-                                <Sidebar
-                                    handleSelectChange={handleSelectChange}
-                                />
-                                <Home
-                                    user={new DummyUser()}
-                                    onUpdateResources={onUpdateResources}
-                                    onUpdateEvents={onUpdateEvents}
-                                />
-                            </div>
+                            <ResourceContextProvider>
+                                <div className="demo-app">
+                                    <Sidebar />
+                                    <Home
+                                        user={new DummyUser()}
+                                        onUpdateEvents={onUpdateEvents}
+                                    />
+                                </div>
+                            </ResourceContextProvider>
                         </ColorContextProvider>
                     </EventContext.Provider>
                 </HeaderContext.Provider>

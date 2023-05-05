@@ -29,6 +29,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import * as dates from "date-arithmetic";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
+import { useResource } from "../contexts/ResourceContext";
 
 function MyDay({
     date,
@@ -112,8 +113,8 @@ const ReservationTable = (props: {
     };
 
     const { user, setError } = useContext(HeaderContext);
-    const { events, resources, selectedResources, eventUpdateCount } =
-        useContext(EventContext);
+    const { events, eventUpdateCount } = useContext(EventContext);
+    const { resources, selectedResources } = useResource();
 
     function ReserveTableToolBar() {
         const apiRef = useGridApiContext();
@@ -281,7 +282,7 @@ const ReservationTable = (props: {
         () =>
             events!.current.filter(
                 (e) =>
-                    selectedResources!
+                    selectedResources
                         .map((r) => r.name)
                         .indexOf(e.resource_name!) !== -1
             ),
@@ -319,7 +320,7 @@ const ReservationTable = (props: {
                             }
                             step={60}
                             resourceAccessor={"resource_id"}
-                            resources={selectedResources!}
+                            resources={selectedResources}
                             resourceTitleAccessor={"name"}
                             localizer={djLocalizer}
                         />

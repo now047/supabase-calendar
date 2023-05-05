@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import React from "react";
-import { useEffect, useState, createContext, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
@@ -15,14 +15,14 @@ import ReservationTable from "./ReservationTable";
 import { getResourceName } from "../lib/resource-utils";
 import { strToTimestamp } from "../lib/event-utils";
 import { EventContext, HeaderContext } from "../App";
+import { useResource } from "../contexts/ResourceContext";
 
 interface HomeProps {
     user: User;
-    onUpdateResources: () => void;
     onUpdateEvents: () => void;
 }
 
-const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
+const Home = ({ user, onUpdateEvents }: HomeProps) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [resourceSynced, setResourceSynced] = useState<boolean>(false);
@@ -31,7 +31,8 @@ const Home = ({ user, onUpdateResources, onUpdateEvents }: HomeProps) => {
     const [resourceAdding, setResourceAdding] = useState(false);
     const { tab, setTab, eventFromDate, errorText, setError } =
         useContext(HeaderContext);
-    const { events, resources } = useContext(EventContext);
+    const { events } = useContext(EventContext);
+    const { resources, onUpdateResources } = useResource();
 
     interface IResults {
         access_token: string;

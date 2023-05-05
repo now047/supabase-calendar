@@ -22,6 +22,7 @@ import { supabase } from "../lib/api";
 import { EventContext, HeaderContext } from "../App";
 import Resource from "../lib/resource-utils";
 import { useColor } from "../contexts/ColorContext";
+import { useResource } from "../contexts/ResourceContext";
 
 const ResourceTable = (props: {
     setResourceAdding: (b: boolean) => void;
@@ -30,7 +31,8 @@ const ResourceTable = (props: {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
     const { tab, setTab, errorText, setError } = useContext(HeaderContext);
-    const { events, resources, selectedResources } = useContext(EventContext);
+    const { events } = useContext(EventContext);
+    const { selectedResources } = useResource();
 
     const { colors } = useColor();
 
@@ -174,7 +176,7 @@ const ResourceTable = (props: {
                     >
                         <Box sx={{ width: "100%" }}>
                             <DataGrid
-                                rows={selectedResources!.map((r) => {
+                                rows={selectedResources.map((r) => {
                                     return { ...r, this: r };
                                 })}
                                 columns={resourceTableColumns}

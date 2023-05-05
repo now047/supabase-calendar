@@ -32,6 +32,7 @@ import { getResourceName } from "../lib/resource-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
 import { EventContext, HeaderContext } from "../App";
 import { useColor } from "../contexts/ColorContext";
+import { useResource } from "../contexts/ResourceContext";
 
 const Calendar = (props: {
     eventSynced: boolean;
@@ -40,8 +41,8 @@ const Calendar = (props: {
 }) => {
     const { user, tab, setTab, errorText, setError } =
         useContext(HeaderContext);
-    const { events, resources, selectedResources, eventUpdateCount } =
-        useContext(EventContext);
+    const { events, eventUpdateCount } = useContext(EventContext);
+    const { resources, selectedResources } = useResource();
     const { colors } = useColor();
     const [hoverEvent, setHoverEvent] = useState<
         [IEvent | null, NodeJS.Timeout]
@@ -165,7 +166,7 @@ const Calendar = (props: {
                 event.event.end?.getTime() ?? dayjs("today").toDate().getTime(),
             purpose_of_use: event.event.extendedProps.purpose_of_use,
             resource_name: event.event.title,
-            resources: selectedResources!,
+            resources: selectedResources,
             resource_id: events!.current.filter((e) => {
                 return e.id! === Number(event.event.id);
             })[0].resource_id,
@@ -245,7 +246,7 @@ const Calendar = (props: {
             end: arg.end.getTime(),
             purpose_of_use: "",
             resource_name: "",
-            resources: selectedResources!,
+            resources: selectedResources,
             onClose: modifyEvent,
             onDelete: deleteEvent,
         };
@@ -317,7 +318,7 @@ const Calendar = (props: {
             events!.current
                 .filter(
                     (e) =>
-                        selectedResources!
+                        selectedResources
                             .map((r) => r.name)
                             .indexOf(e.resource_name!) !== -1
                 )
