@@ -127,6 +127,7 @@ function App() {
                     <EventContext.Provider value={currentEventContext}>
                         <ColorContextProvider>
                             <ResourceContextProvider>
+                                {/* needs to be in HeaderContext */}
                                 <div className="demo-app">
                                     <Sidebar />
                                     <Home

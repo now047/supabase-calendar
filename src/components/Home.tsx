@@ -25,14 +25,13 @@ interface HomeProps {
 const Home = ({ user, onUpdateEvents }: HomeProps) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
-    const [resourceSynced, setResourceSynced] = useState<boolean>(false);
     const [reservationInfo, setReservationInfo] =
         useState<ReserveDialogProps | null>(null);
     const [resourceAdding, setResourceAdding] = useState(false);
     const { tab, setTab, eventFromDate, errorText, setError } =
         useContext(HeaderContext);
     const { events } = useContext(EventContext);
-    const { resources, onUpdateResources } = useResource();
+    const { resources, resourceTypes, addResource } = useResource();
 
     interface IResults {
         access_token: string;
@@ -66,10 +65,7 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
         if (result.type === "recovery") {
             setRecoveryToken(result.access_token);
         }
-        if (!resourceSynced) {
-            console.log("calling fetch resources");
-            fetchResources().catch(setError);
-        } else if (!eventSynced) {
+        if (!eventSynced) {
             console.log("calling fetch events");
             fetchEvents()
                 .then((new_events: IEvent[]) => {
@@ -79,7 +75,18 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
                 })
                 .catch(setError);
         }
-    }, [resourceSynced, eventSynced, errorText, reservationInfo]);
+    }, [eventSynced]);
+
+    useEffect(() => {
+        console.log("useEffect changed resourceTypes");
+        fetchEvents()
+            .then((new_events: IEvent[]) => {
+                events!.current = new_events;
+                setEventSynced(true);
+                onUpdateEvents();
+            })
+            .catch(setError);
+    }, [resourceTypes]);
 
     const DBEventToIEvent = (db_event: any) => {
         return {
@@ -115,61 +122,6 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
         });
     };
 
-    // Resources
-    const fetchResources = async () => {
-        let { data: res, error } = await supabase
-            .from("resources")
-            .select("*")
-            .order("id", { ascending: false });
-        if (error) setError(error.message);
-        else {
-            console.log("Resources: ", res);
-            resources!.current = res as Resource[];
-            setResourceSynced(true);
-            onUpdateResources();
-        }
-    };
-
-    const addResource = async (r: Resource) => {
-        console.log("addResource:", r);
-        if (r.id) {
-            let { data: resource, error } = await supabase
-                .from("resources")
-                .update({
-                    id: r.id,
-                    name: r.name,
-                    type: r.type,
-                    generation: r.generation,
-                    display_color: r.display_color,
-                    note: r.note,
-                })
-                .single();
-            if (error) setError(error.message);
-            else {
-                setResourceSynced(false);
-                console.log("Updated resources", resource);
-                setError(null);
-            }
-        } else {
-            let { data: resource, error } = await supabase
-                .from("resources")
-                .insert({
-                    id: r.id,
-                    name: r.name,
-                    type: r.type,
-                    generation: r.generation,
-                    display_color: r.display_color,
-                    note: r.note,
-                })
-                .single();
-            if (error) setError(error.message);
-            else {
-                setResourceSynced(false);
-                setError(null);
-            }
-        }
-    };
-
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource");
         setResourceAdding(false);
@@ -202,16 +154,13 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
     ) : tab === "Resource" ? (
         <div className={"supabase-calendar-main"}>
             <Header setEventSynced={setEventSynced} />
-            <ResourceTable
-                setResourceAdding={setResourceAdding}
-                setResourceSynced={setResourceSynced}
-            />
+            <ResourceTable setResourceAdding={setResourceAdding} />
         </div>
     ) : tab === "Calendar" ? (
         <div className={"supabase-calendar-main"}>
             <Header setEventSynced={setEventSynced} />
             <Calendar
-                eventSynced={eventSynced && resourceSynced}
+                eventSynced={eventSynced}
                 setReservationInfo={setReservationInfo}
                 setEventSynced={setEventSynced}
             />

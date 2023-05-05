@@ -93,7 +93,6 @@ const ReserveDialog = (props: ResourceDialogProps) => {
     };
 
     const handleNameChange = (event: any) => {
-        console.log("name change:", event.target.value);
         setNameError(false);
         setName(event.target.value);
     };
@@ -114,7 +113,6 @@ const ReserveDialog = (props: ResourceDialogProps) => {
     };
 
     const handleNoteChange = (event: any) => {
-        console.log("note change:", event.target.value);
         setNote(event.target.value);
     };
 

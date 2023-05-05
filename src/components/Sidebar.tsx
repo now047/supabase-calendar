@@ -15,7 +15,6 @@ import { Avatar } from "@mui/material";
 import { Typography } from "@mui/material";
 
 import Resource from "../lib/resource-utils";
-import { EventContext } from "../App";
 
 import { Theme, useTheme } from "@mui/material/styles";
 import { useColor } from "../contexts/ColorContext";

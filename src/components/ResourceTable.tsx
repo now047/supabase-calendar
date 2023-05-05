@@ -24,15 +24,12 @@ import Resource from "../lib/resource-utils";
 import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
 
-const ResourceTable = (props: {
-    setResourceAdding: (b: boolean) => void;
-    setResourceSynced: (b: boolean) => void;
-}) => {
+const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
     const { tab, setTab, errorText, setError } = useContext(HeaderContext);
     const { events } = useContext(EventContext);
-    const { selectedResources } = useResource();
+    const { selectedResources, deleteResource } = useResource();
 
     const { colors } = useColor();
 
@@ -145,18 +142,6 @@ const ResourceTable = (props: {
             </GridToolbarContainer>
         );
     }
-
-    const deleteResource = async (id: string | undefined) => {
-        if (id) {
-            let res = await supabase.from("resources").delete().eq("id", id);
-            if (res.error !== null) {
-                setError(res.error.details);
-            } else {
-                props.setResourceSynced(false);
-                setError(null);
-            }
-        }
-    };
 
     const handleDubleClickOnTable = () => {
         console.log("handleDubleClickOnTable");
