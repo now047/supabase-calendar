@@ -11,10 +11,9 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button, Stack } from "@mui/material";
 
-import { supabase } from "../lib/api";
 import { toLocalDateString } from "../lib/event-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
-import { HeaderContext, EventContext } from "../App";
+import { HeaderContext } from "../App";
 
 import {
     Calendar as BigCalendar,
@@ -30,6 +29,7 @@ import * as dates from "date-arithmetic";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import { useResource } from "../contexts/ResourceContext";
+import { useEvent } from "../contexts/EventContext";
 
 function MyDay({
     date,
@@ -103,7 +103,6 @@ MyDay.title = (date: Date) => {
 
 const ReservationTable = (props: {
     setReservationInfo: (info: ReserveDialogProps) => void;
-    setEventSynced: (b: boolean) => void;
 }) => {
     const [pageSize, setPageSize] = useState<number>(20);
     const [showTable, setShowTable] = useState<boolean>(true);
@@ -113,7 +112,7 @@ const ReservationTable = (props: {
     };
 
     const { user, setError } = useContext(HeaderContext);
-    const { events, eventUpdateCount } = useContext(EventContext);
+    const { events, deleteEvent } = useEvent();
     const { resources, selectedResources } = useResource();
 
     function ReserveTableToolBar() {
@@ -132,7 +131,7 @@ const ReservationTable = (props: {
                         `Are you sure to cancel resarvation ? : '${event.purpose_of_use}'`
                     )
                 ) {
-                    deleteEvent(event.id);
+                    deleteEventSync(event.id);
                 }
                 ent = iter.next();
             }
@@ -153,11 +152,9 @@ const ReservationTable = (props: {
         );
     }
 
-    const deleteEvent = async (id: string | undefined) => {
+    const deleteEventSync = (id: string | undefined) => {
         if (id) {
-            let res = await supabase.from("events").delete().eq("id", id);
-            props.setEventSynced(false);
-            setError(null);
+            deleteEvent(id);
         }
     };
 
@@ -240,53 +237,53 @@ const ReservationTable = (props: {
         []
     );
 
-    const { types, generations } = useMemo(
-        () => ({
-            types: resources!.current
-                .map((r) => r.type)
-                .filter((v, i, a) => a.indexOf(v) === i),
-            generations: resources!.current
-                .map((r) => r.generation)
-                .filter((v, i, a) => a.indexOf(v) === i),
-        }),
-        [resources]
-    );
+    // const { types, generations } = useMemo(
+    //     () => ({
+    //         types: resources!.current
+    //             .map((r) => r.type)
+    //             .filter((v, i, a) => a.indexOf(v) === i),
+    //         generations: resources!.current
+    //             .map((r) => r.generation)
+    //             .filter((v, i, a) => a.indexOf(v) === i),
+    //     }),
+    //     [resources]
+    // );
 
-    const [typeCheckedState, setTypeCheckedState] = useState(
-        types.map((t) => true)
-    );
+    // const [typeCheckedState, setTypeCheckedState] = useState(
+    //     types.map((t) => true)
+    // );
 
-    const handleSelectTypeChange = (
-        i: number,
-        event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        setTypeCheckedState(
-            typeCheckedState.map((c, j) => (i === j ? event.target.checked : c))
-        );
-    };
+    // const handleSelectTypeChange = (
+    //     i: number,
+    //     event: React.ChangeEvent<HTMLInputElement>
+    // ) => {
+    //     setTypeCheckedState(
+    //         typeCheckedState.map((c, j) => (i === j ? event.target.checked : c))
+    //     );
+    // };
 
-    const [genCheckedState, setGenCheckedState] = useState(
-        generations.map((g) => true)
-    );
+    // const [genCheckedState, setGenCheckedState] = useState(
+    //     generations.map((g) => true)
+    // );
 
-    const handleSelectGenChange = (
-        i: number,
-        event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        setGenCheckedState(
-            genCheckedState.map((c, j) => (i === j ? event.target.checked : c))
-        );
-    };
+    // const handleSelectGenChange = (
+    //     i: number,
+    //     event: React.ChangeEvent<HTMLInputElement>
+    // ) => {
+    //     setGenCheckedState(
+    //         genCheckedState.map((c, j) => (i === j ? event.target.checked : c))
+    //     );
+    // };
 
     const selectedEvents = useMemo(
         () =>
-            events!.current.filter(
+            events.filter(
                 (e) =>
                     selectedResources
                         .map((r) => r.name)
                         .indexOf(e.resource_name!) !== -1
             ),
-        [events, eventUpdateCount, selectedResources]
+        [events, selectedResources]
     );
 
     return (

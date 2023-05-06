@@ -18,7 +18,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 
 import IEvent from "../lib/event-utils";
 import Resource from "../lib/resource-utils";
-import { EventContext } from "../App";
 import { useColor } from "../contexts/ColorContext";
 
 export interface ReserveDialogProps {

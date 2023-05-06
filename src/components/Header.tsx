@@ -14,9 +14,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export type TabLabel = "Resource" | "Calendar" | "Reservation";
 
-const Header = (props: {
-    setEventSynced: Dispatch<SetStateAction<boolean>>;
-}) => {
+const Header = () => {
     const {
         tab,
         setTab,
@@ -31,7 +29,6 @@ const Header = (props: {
 
     const onStartDateChange = (value: dayjs.Dayjs | null, event: any) => {
         setEventFromDate(value!);
-        props.setEventSynced(false);
     };
 
     return (

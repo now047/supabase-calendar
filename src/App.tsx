@@ -14,6 +14,7 @@ import IEvent from "./lib/event-utils";
 import { TabLabel } from "./components/Header";
 import { ColorContextProvider } from "./contexts/ColorContext";
 import { ResourceContextProvider } from "./contexts/ResourceContext";
+import { EventContextProvider } from "./contexts/EventContext";
 
 class DummyUAM implements UserAppMetadata {
     provider?: string;
@@ -60,16 +61,6 @@ const defaultHeaderContext: HeaderContextType = {
 };
 export const HeaderContext = createContext(defaultHeaderContext);
 
-type EventContextType = {
-    events: React.MutableRefObject<IEvent[]> | null;
-    eventUpdateCount: number;
-};
-const defaultEventContext: EventContextType = {
-    events: null,
-    eventUpdateCount: 0,
-};
-export const EventContext = createContext(defaultEventContext);
-
 function App() {
     const [user, setUser] = useState<User | null>(new DummyUser());
     const [errorText, setError] = useState<string | null>("");
@@ -85,19 +76,6 @@ function App() {
         setEventFromDate,
         errorText,
         setError,
-    };
-
-    const events = useRef<IEvent[]>([]);
-    const [eventUpdateCount, setEventUpdateCount] = useState(0);
-
-    const onUpdateEvents = () => {
-        console.log("onUpdateEvents");
-        setEventUpdateCount((prev) => prev + 1);
-    };
-
-    const currentEventContext = {
-        events: events,
-        eventUpdateCount: eventUpdateCount,
     };
 
     useEffect(() => {
@@ -124,20 +102,18 @@ function App() {
       */}
             {
                 <HeaderContext.Provider value={currentHeaderContext}>
-                    <EventContext.Provider value={currentEventContext}>
-                        <ColorContextProvider>
-                            <ResourceContextProvider>
-                                {/* needs to be in HeaderContext */}
+                    <ColorContextProvider>
+                        <ResourceContextProvider>
+                            {/* needs to be in HeaderContext */}
+                            <EventContextProvider>
+                                {/* needs to be in Color,Header,ResourceContext */}
                                 <div className="demo-app">
                                     <Sidebar />
-                                    <Home
-                                        user={new DummyUser()}
-                                        onUpdateEvents={onUpdateEvents}
-                                    />
+                                    <Home user={new DummyUser()} />
                                 </div>
-                            </ResourceContextProvider>
-                        </ColorContextProvider>
-                    </EventContext.Provider>
+                            </EventContextProvider>
+                        </ResourceContextProvider>
+                    </ColorContextProvider>
                 </HeaderContext.Provider>
             }
         </div>

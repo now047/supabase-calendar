@@ -1,45 +1,19 @@
 import * as React from "react";
-import dayjs, { Dayjs } from "dayjs";
 import Button from "@mui/material/Button";
 import Avatar from "@mui/material/Avatar";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
-import PersonIcon from "@mui/icons-material/Person";
-import AddIcon from "@mui/icons-material/Add";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import Input from "@mui/material/Input";
 import InputLabel from "@mui/material/InputLabel";
-import InputAdornment from "@mui/material/InputAdornment";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Box from "@mui/material/Box";
 import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateField } from "@mui/x-date-pickers/DateField";
-import { TimeField } from "@mui/x-date-pickers/TimeField";
-import { DateTimeField } from "@mui/x-date-pickers/DateTimeField";
-import { MultiInputDateRangeField } from "@mui/x-date-pickers-pro/MultiInputDateRangeField";
-import { MultiInputTimeRangeField } from "@mui/x-date-pickers-pro/MultiInputTimeRangeField";
-import { MultiInputDateTimeRangeField } from "@mui/x-date-pickers-pro/MultiInputDateTimeRangeField";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
-import { useTimePickerDefaultizedProps } from "@mui/x-date-pickers/TimePicker/shared";
 
-import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
-import IEvent from "../lib/event-utils";
 import Resource from "../lib/resource-utils";
-import { EventContext } from "../App";
 import { useColor } from "../contexts/ColorContext";
 
 export interface ResourceDialogProps {

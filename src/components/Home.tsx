@@ -14,24 +14,21 @@ import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
 import { getResourceName } from "../lib/resource-utils";
 import { strToTimestamp } from "../lib/event-utils";
-import { EventContext, HeaderContext } from "../App";
+import { HeaderContext } from "../App";
 import { useResource } from "../contexts/ResourceContext";
+import { useEvent } from "../contexts/EventContext";
 
 interface HomeProps {
     user: User;
-    onUpdateEvents: () => void;
 }
 
-const Home = ({ user, onUpdateEvents }: HomeProps) => {
+const Home = ({ user }: HomeProps) => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
-    const [eventSynced, setEventSynced] = useState<boolean>(false);
     const [reservationInfo, setReservationInfo] =
         useState<ReserveDialogProps | null>(null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const { tab, setTab, eventFromDate, errorText, setError } =
-        useContext(HeaderContext);
-    const { events } = useContext(EventContext);
-    const { resources, resourceTypes, addResource } = useResource();
+    const { tab, setError } = useContext(HeaderContext);
+    const { resources, addResource } = useResource();
 
     interface IResults {
         access_token: string;
@@ -65,61 +62,11 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
         if (result.type === "recovery") {
             setRecoveryToken(result.access_token);
         }
-        if (!eventSynced) {
-            console.log("calling fetch events");
-            fetchEvents()
-                .then((new_events: IEvent[]) => {
-                    events!.current = new_events;
-                    setEventSynced(true);
-                    onUpdateEvents();
-                })
-                .catch(setError);
-        }
-    }, [eventSynced]);
-
-    useEffect(() => {
-        console.log("useEffect changed resourceTypes");
-        fetchEvents()
-            .then((new_events: IEvent[]) => {
-                events!.current = new_events;
-                setEventSynced(true);
-                onUpdateEvents();
-            })
-            .catch(setError);
-    }, [resourceTypes]);
-
-    const DBEventToIEvent = (db_event: any) => {
-        return {
-            ...db_event,
-            purpose_of_use: db_event.title,
-            start: strToTimestamp(db_event.start),
-            end: strToTimestamp(db_event.end),
-            resource_name: getResourceName(
-                db_event.resource_id,
-                resources!.current
-            ),
-        } as IEvent;
-    };
+    }, []);
 
     // Menue
     const handleLogout = async () => {
         supabase.auth.signOut().catch(setError);
-    };
-
-    // Events
-    const fetchEvents = async () => {
-        return new Promise(async (resolve: (e: IEvent[]) => void, reject) => {
-            let { data: events, error } = await supabase
-                .from("events")
-                .select("*")
-                .gte("end", eventFromDate.toISOString())
-                .order("id", { ascending: false });
-            if (error) {
-                reject(error.message);
-            } else {
-                resolve(events?.map((e) => DBEventToIEvent(e)) as IEvent[]);
-            }
-        });
     };
 
     const handleResourceDialogClose = (resource: Resource | null) => {
@@ -153,25 +100,18 @@ const Home = ({ user, onUpdateEvents }: HomeProps) => {
         </div>
     ) : tab === "Resource" ? (
         <div className={"supabase-calendar-main"}>
-            <Header setEventSynced={setEventSynced} />
+            <Header />
             <ResourceTable setResourceAdding={setResourceAdding} />
         </div>
     ) : tab === "Calendar" ? (
         <div className={"supabase-calendar-main"}>
-            <Header setEventSynced={setEventSynced} />
-            <Calendar
-                eventSynced={eventSynced}
-                setReservationInfo={setReservationInfo}
-                setEventSynced={setEventSynced}
-            />
+            <Header />
+            <Calendar setReservationInfo={setReservationInfo} />
         </div>
     ) : tab === "Reservation" ? (
         <div className={"supabase-calendar-main"}>
-            <Header setEventSynced={setEventSynced} />
-            <ReservationTable
-                setReservationInfo={setReservationInfo}
-                setEventSynced={setEventSynced}
-            />
+            <Header />
+            <ReservationTable setReservationInfo={setReservationInfo} />
         </div>
     ) : (
         <>{handleLogout()}</>

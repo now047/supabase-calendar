@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import { Button, Fade, Snackbar } from "@mui/material";
 import { Backdrop } from "@mui/material";
@@ -21,28 +21,17 @@ import {
 import jaLocale from "@fullcalendar/core/locales/ja";
 import dayjs from "dayjs";
 
-import { supabase } from "../lib/api";
-import IEvent, {
-    dateToTimestamp,
-    toDateString,
-    strToTimestamp,
-    toLocalDateString,
-} from "../lib/event-utils";
-import { getResourceName } from "../lib/resource-utils";
+import IEvent, { dateToTimestamp, toLocalDateString } from "../lib/event-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
-import { EventContext, HeaderContext } from "../App";
 import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
+import { useEvent } from "../contexts/EventContext";
 
 const Calendar = (props: {
-    eventSynced: boolean;
     setReservationInfo: (info: ReserveDialogProps | null) => void;
-    setEventSynced: (b: boolean) => void;
 }) => {
-    const { user, tab, setTab, errorText, setError } =
-        useContext(HeaderContext);
-    const { events, eventUpdateCount } = useContext(EventContext);
-    const { resources, selectedResources } = useResource();
+    const { events, eventSynced, syncEvent, deleteEvent } = useEvent();
+    const { selectedResources } = useResource();
     const { colors } = useColor();
     const [hoverEvent, setHoverEvent] = useState<
         [IEvent | null, NodeJS.Timeout]
@@ -58,11 +47,6 @@ const Calendar = (props: {
         console.log("date click: ", arg);
     };
 
-    const getResouceColor = (id: number) =>
-        colors.get(
-            resources!.current.filter((r) => r.id === id)[0].display_color
-        );
-
     const getResourceId = (color: string) => {
         colors.forEach((col) => {
             if (col[1] === color) {
@@ -72,73 +56,18 @@ const Calendar = (props: {
         return 1;
     };
 
-    const DBEventToIEvent = (db_event: any) => {
-        return {
-            ...db_event,
-            purpose_of_use: db_event.title,
-            start: strToTimestamp(db_event.start),
-            end: strToTimestamp(db_event.end),
-            resource_name: getResourceName(
-                db_event.resource_id,
-                resources!.current
-            ),
-        } as IEvent;
-    };
-
-    const syncEvent = async (e: IEvent) => {
-        console.log("syncing DB:", e);
-        if (e.id) {
-            let { data: event, error } = await supabase
-                .from("events")
-                .update({
-                    id: e.id,
-                    title: e.purpose_of_use,
-                    start: toDateString(e.start),
-                    end: toDateString(e.end),
-                    color: getResouceColor(e.resource_id),
-                    resource_id: e.resource_id,
-                })
-                .single();
-            if (error) setError(error.message);
-            else {
-                props.setEventSynced(false);
-                console.log("synced event:", DBEventToIEvent(event));
-                setError(null);
-            }
-        } else {
-            console.log("syncing DB new entry");
-            let { data: event, error } = await supabase
-                .from("events")
-                .insert({
-                    title: e.purpose_of_use,
-                    start: toDateString(e.start),
-                    end: toDateString(e.end),
-                    color: getResouceColor(e.resource_id),
-                    user_id: user!.id,
-                    resource_id: e.resource_id,
-                })
-                .single();
-            if (error) setError(error.message);
-            else {
-                props.setEventSynced(false);
-                events!.current = [...events!.current, DBEventToIEvent(event)];
-                setError(null);
-            }
-        }
-    };
-
-    const modifyEvent = (event: IEvent | null) => {
+    const modifyEventHandler = (event: IEvent | null) => {
         props.setReservationInfo(null);
         if (event !== null) {
             syncEvent(event);
         }
     };
 
-    const deleteEvent = async (
+    const deleteEventHandler = async (
         id: string | undefined,
         title: string | undefined
     ) => {
-        console.log("deleteEvent:", title);
+        console.log("deleteEventHandler:", title);
         props.setReservationInfo(null);
         if (title && id) {
             if (
@@ -146,9 +75,7 @@ const Calendar = (props: {
                     `Are you sure you want to delete the event '${title}'`
                 )
             ) {
-                let res = await supabase.from("events").delete().eq("id", id);
-                props.setEventSynced(false);
-                setError(null);
+                deleteEvent(id);
             }
         }
     };
@@ -167,11 +94,11 @@ const Calendar = (props: {
             purpose_of_use: event.event.extendedProps.purpose_of_use,
             resource_name: event.event.title,
             resources: selectedResources,
-            resource_id: events!.current.filter((e) => {
+            resource_id: events.filter((e) => {
                 return e.id! === Number(event.event.id);
             })[0].resource_id,
-            onClose: modifyEvent,
-            onDelete: deleteEvent,
+            onClose: modifyEventHandler,
+            onDelete: deleteEventHandler,
         };
         props.setReservationInfo(info);
     };
@@ -200,7 +127,7 @@ const Calendar = (props: {
 
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
         let is_changed = false;
-        events!.current.map((e) => {
+        events.map((e) => {
             let ie = updated_events.find((ie, i, api) => {
                 return Number(ie.id) == e.id;
             });
@@ -247,8 +174,8 @@ const Calendar = (props: {
             purpose_of_use: "",
             resource_name: "",
             resources: selectedResources,
-            onClose: modifyEvent,
-            onDelete: deleteEvent,
+            onClose: modifyEventHandler,
+            onDelete: deleteEventHandler,
         };
         props.setReservationInfo(info);
     };
@@ -315,7 +242,7 @@ const Calendar = (props: {
 
     const selectedEventsMemo = useMemo(
         () =>
-            events!.current
+            events
                 .filter(
                     (e) =>
                         selectedResources
@@ -333,9 +260,10 @@ const Calendar = (props: {
                         //allDay: true,
                     };
                 }),
-        [events, selectedResources, eventUpdateCount, colors]
+        [events, selectedResources, colors]
     );
 
+    console.log("calendar reander", eventSynced);
     return (
         <div className={"flex m-4 justify-center"}>
             <h1>Calendar</h1>
@@ -344,7 +272,7 @@ const Calendar = (props: {
                     color: "#fff",
                     zIndex: (theme) => theme.zIndex.drawer + 1,
                 }}
-                open={!props.eventSynced}
+                open={!eventSynced}
             >
                 <CircularProgress color="inherit" />
             </Backdrop>

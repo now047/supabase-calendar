@@ -17,25 +17,22 @@ import {
     GridRowModel,
     GridToolbarContainer,
 } from "@mui/x-data-grid";
-import { supabase } from "../lib/api";
 
-import { EventContext, HeaderContext } from "../App";
 import Resource from "../lib/resource-utils";
 import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
+import { useEvent } from "../contexts/EventContext";
 
 const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
-    const { tab, setTab, errorText, setError } = useContext(HeaderContext);
-    const { events } = useContext(EventContext);
+    const { events } = useEvent();
     const { selectedResources, deleteResource } = useResource();
-
     const { colors } = useColor();
 
     const numEventsForSpecificResource = (id: number) => {
         let count = 0;
-        events!.current.forEach((e) => {
+        events.forEach((e) => {
             if (e.resource_id === id) count++;
         });
         return count;
