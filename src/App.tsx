@@ -10,7 +10,6 @@ import type {
     UserMetadata,
 } from "@supabase/supabase-js";
 
-import IEvent from "./lib/event-utils";
 import { TabLabel } from "./components/Header";
 import { ColorContextProvider } from "./contexts/ColorContext";
 import { ResourceContextProvider } from "./contexts/ResourceContext";
@@ -109,7 +108,7 @@ function App() {
                                 {/* needs to be in Color,Header,ResourceContext */}
                                 <div className="demo-app">
                                     <Sidebar />
-                                    <Home user={new DummyUser()} />
+                                    <Home user={user!} />
                                 </div>
                             </EventContextProvider>
                         </ResourceContextProvider>

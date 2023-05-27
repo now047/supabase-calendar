@@ -111,9 +111,8 @@ const ReservationTable = (props: {
         else return toLocalDateString(params.value);
     };
 
-    const { user, setError } = useContext(HeaderContext);
     const { events, deleteEvent } = useEvent();
-    const { resources, selectedResources } = useResource();
+    const { selectedResources } = useResource();
 
     function ReserveTableToolBar() {
         const apiRef = useGridApiContext();

@@ -23,7 +23,7 @@ import dayjs from "dayjs";
 
 import IEvent, { dateToTimestamp, toLocalDateString } from "../lib/event-utils";
 import { ReserveDialogProps } from "./ReserveDialog";
-import { useColor } from "../contexts/ColorContext";
+// import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
 import { useEvent } from "../contexts/EventContext";
 
@@ -32,10 +32,10 @@ const Calendar = (props: {
 }) => {
     const { events, eventSynced, syncEvent, deleteEvent } = useEvent();
     const { selectedResources } = useResource();
-    const { colors } = useColor();
-    const [hoverEvent, setHoverEvent] = useState<
-        [IEvent | null, NodeJS.Timeout]
-    >([null, setTimeout(() => {}, 0)]);
+    // const { colors } = useColor();
+    // const [hoverEvent, setHoverEvent] = useState<
+    //     [IEvent | null, NodeJS.Timeout]
+    // >([null, setTimeout(() => {}, 0)]);
 
     const businessHours = {
         daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
@@ -43,18 +43,18 @@ const Calendar = (props: {
         endTime: "17:15",
     };
 
-    const handleDateClick = (arg: DateClickArg) => {
-        console.log("date click: ", arg);
-    };
+    // const handleDateClick = (arg: DateClickArg) => {
+    //     console.log("date click: ", arg);
+    // };
 
-    const getResourceId = (color: string) => {
-        colors.forEach((col) => {
-            if (col[1] === color) {
-                return col[0];
-            }
-        });
-        return 1;
-    };
+    // const getResourceId = (color: string) => {
+    //     colors.forEach((col) => {
+    //         if (col[1] === color) {
+    //             return col[0];
+    //         }
+    //     });
+    //     return 1;
+    // };
 
     const modifyEventHandler = (event: IEvent | null) => {
         props.setReservationInfo(null);
@@ -103,17 +103,17 @@ const Calendar = (props: {
         props.setReservationInfo(info);
     };
 
-    const handleDragStart = (event: EventDragStartArg) => {
-        console.log("event drag start: ", event);
-    };
+    // const handleDragStart = (event: EventDragStartArg) => {
+    //     console.log("event drag start: ", event);
+    // };
 
-    const handleDragStop = (event: EventDragStopArg) => {
-        console.log("event drag end: ", event);
-    };
+    // const handleDragStop = (event: EventDragStopArg) => {
+    //     console.log("event drag end: ", event);
+    // };
 
-    const handleDubleClickOnTable = () => {
-        console.log("handleDubleClickOnTable");
-    };
+    // const handleDubleClickOnTable = () => {
+    //     console.log("handleDubleClickOnTable");
+    // };
 
     const eventDiffers = (e: IEvent, ie: EventApi) => {
         return (
@@ -181,64 +181,65 @@ const Calendar = (props: {
     };
 
     // Mouse over can't cowork with date selection ?
-    const handleMouseEnter = (eventInfo: EventHoveringArg) => {
-        setHoverEvent([
-            {
-                id: Number(eventInfo.event.id),
-                purpose_of_use: eventInfo.event.extendedProps.purpose_of_use,
-                color: eventInfo.event.backgroundColor,
-                start: eventInfo.event.start!.getTime(),
-                end: eventInfo.event.end!.getTime(),
-                resource_id: getResourceId(eventInfo.event.backgroundColor),
-            },
-            setTimeout(handleMouseLeave.bind(null, null), 3000),
-        ]);
-    };
+    // const handleMouseEnter = (eventInfo: EventHoveringArg) => {
+    //     setHoverEvent([
+    //         {
+    //             id: Number(eventInfo.event.id),
+    //             purpose_of_use: eventInfo.event.extendedProps.purpose_of_use,
+    //             color: eventInfo.event.backgroundColor,
+    //             start: eventInfo.event.start!.getTime(),
+    //             end: eventInfo.event.end!.getTime(),
+    //             resource_id: 0,
+    //             //resource_id: getResourceId(eventInfo.event.backgroundColor),
+    //         },
+    //         setTimeout(handleMouseLeave.bind(null, null), 3000),
+    //     ]);
+    // };
 
-    const handleMouseLeave = (eventInfo: EventHoveringArg | null) => {
-        console.log("mouse leave");
-        if (hoverEvent[0] !== null) {
-            setHoverEvent([null, setTimeout(() => {}, 0)]);
-        }
-    };
+    // const handleMouseLeave = (eventInfo: EventHoveringArg | null) => {
+    //     console.log("mouse leave");
+    //     if (hoverEvent[0] !== null) {
+    //         setHoverEvent([null, setTimeout(() => {}, 0)]);
+    //     }
+    // };
 
-    const hoverEventStr = () => {
-        if (hoverEvent[0] === null) return "none";
-        let ret = hoverEvent[0].purpose_of_use + ": ";
-        if (hoverEvent[0].start !== undefined) {
-            ret += `start at ${toLocalDateString(hoverEvent[0].start)} `;
-        }
-        if (hoverEvent[0].end !== undefined) {
-            ret += `end at ${toLocalDateString(hoverEvent[0].end)}!`;
-        }
-        return ret;
-    };
+    // const hoverEventStr = () => {
+    //     if (hoverEvent[0] === null) return "none";
+    //     let ret = hoverEvent[0].purpose_of_use + ": ";
+    //     if (hoverEvent[0].start !== undefined) {
+    //         ret += `start at ${toLocalDateString(hoverEvent[0].start)} `;
+    //     }
+    //     if (hoverEvent[0].end !== undefined) {
+    //         ret += `end at ${toLocalDateString(hoverEvent[0].end)}!`;
+    //     }
+    //     return ret;
+    // };
 
-    const action = (
-        <React.Fragment>
-            <Button
-                color="secondary"
-                size="small"
-                onClick={handleMouseLeave.bind(null, null)}
-            >
-                got it
-            </Button>
-        </React.Fragment>
-    );
+    // const action = (
+    //     <React.Fragment>
+    //         <Button
+    //             color="secondary"
+    //             size="small"
+    //             onClick={handleMouseLeave.bind(null, null)}
+    //         >
+    //             got it
+    //         </Button>
+    //     </React.Fragment>
+    // );
 
-    const renderEventContent = (eventInfo: EventContentArg) => {
-        return (
-            <a
-                className="fc-event fc-event-draggable
-                            fc-event-resizable fc-event-start fc-event-end
-                            fc-event-future fc-daygrid-event fc-daygrid-dot-event"
-            >
-                <div className="fc-daygrid-event-dot"></div>
-                <div className="fc-event-time">{eventInfo.timeText}</div>
-                <div className="fc-event-title">{eventInfo.event.title}</div>
-            </a>
-        );
-    };
+    // const renderEventContent = (eventInfo: EventContentArg) => {
+    //     return (
+    //         <a
+    //             className="fc-event fc-event-draggable
+    //                         fc-event-resizable fc-event-start fc-event-end
+    //                         fc-event-future fc-daygrid-event fc-daygrid-dot-event"
+    //         >
+    //             <div className="fc-daygrid-event-dot"></div>
+    //             <div className="fc-event-time">{eventInfo.timeText}</div>
+    //             <div className="fc-event-title">{eventInfo.event.title}</div>
+    //         </a>
+    //     );
+    // };
 
     const selectedEventsMemo = useMemo(
         () =>
@@ -260,10 +261,9 @@ const Calendar = (props: {
                         //allDay: true,
                     };
                 }),
-        [events, selectedResources, colors]
+        [events, selectedResources]
     );
 
-    console.log("calendar reander", eventSynced);
     return (
         <div className={"flex m-4 justify-center"}>
             <h1>Calendar</h1>
@@ -303,7 +303,7 @@ const Calendar = (props: {
                 //eventContent={renderEventContent}
                 events={selectedEventsMemo}
             />
-            <Snackbar
+            {/* <Snackbar
                 anchorOrigin={{ horizontal: "center", vertical: "bottom" }}
                 open={hoverEvent[0] !== null}
                 TransitionComponent={Fade}
@@ -311,7 +311,7 @@ const Calendar = (props: {
                 message={hoverEventStr()}
                 key={"mouse-over-event-snackbar"}
                 action={action}
-            />
+            /> */}
         </div>
     );
 };
