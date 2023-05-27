@@ -145,41 +145,35 @@ const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
     };
 
     return (
-        <>
-            <Stack spacing={5}>
-                <h1> Resorce </h1>
-                <div className={"flex m-4 justify-center"}>
-                    <Container
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            width: "90%",
-                        }}
-                    >
-                        <Box sx={{ width: "100%" }}>
-                            <DataGrid
-                                rows={selectedResources.map((r) => {
-                                    return { ...r, this: r };
-                                })}
-                                columns={resourceTableColumns}
-                                rowsPerPageOptions={[5, 10, 20, 50]}
-                                pageSize={resourceTablePageSize}
-                                onPageSizeChange={(newPageSize) =>
-                                    setResourceTablePageSize(newPageSize)
-                                }
-                                pagination
-                                autoHeight
-                                checkboxSelection
-                                components={{ Toolbar: ResourceTableToolBar }}
-                                disableSelectionOnClick
-                                // experimentalFeatures={{ newEditingApi: true }}
-                                onCellDoubleClick={handleDubleClickOnTable}
-                            />
-                        </Box>
-                    </Container>
-                </div>
-            </Stack>
-        </>
+        <Stack spacing={5}>
+            <h1> Resorce </h1>
+            <Container
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                }}
+            >
+                <DataGrid
+                    rows={selectedResources.map((r) => {
+                        return { ...r, this: r };
+                    })}
+                    columns={resourceTableColumns}
+                    rowsPerPageOptions={[5, 10, 20, 50]}
+                    pageSize={resourceTablePageSize}
+                    onPageSizeChange={(newPageSize) =>
+                        setResourceTablePageSize(newPageSize)
+                    }
+                    pagination
+                    autoHeight
+                    checkboxSelection
+                    components={{ Toolbar: ResourceTableToolBar }}
+                    disableSelectionOnClick
+                    // experimentalFeatures={{ newEditingApi: true }}
+                    onCellDoubleClick={handleDubleClickOnTable}
+                />
+            </Container>
+        </Stack>
     );
 };
 
