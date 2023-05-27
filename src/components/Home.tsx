@@ -4,7 +4,6 @@ import { useEffect, useState, useContext } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
-import IEvent from "../lib/event-utils";
 import ReserveDialog, { ReserveDialogProps } from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
 import Resource from "../lib/resource-utils";
@@ -12,11 +11,9 @@ import Header from "./Header";
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
-import { getResourceName } from "../lib/resource-utils";
-import { strToTimestamp } from "../lib/event-utils";
 import { HeaderContext } from "../App";
 import { useResource } from "../contexts/ResourceContext";
-import { useEvent } from "../contexts/EventContext";
+import ErrorDialog from "./ErrorDialog";
 
 interface HomeProps {
     user: User;
@@ -101,16 +98,19 @@ const Home = ({ user }: HomeProps) => {
     ) : tab === "Resource" ? (
         <div className={"supabase-calendar-main"}>
             <Header />
+            <ErrorDialog />
             <ResourceTable setResourceAdding={setResourceAdding} />
         </div>
     ) : tab === "Calendar" ? (
         <div className={"supabase-calendar-main"}>
             <Header />
+            <ErrorDialog />
             <Calendar setReservationInfo={setReservationInfo} />
         </div>
     ) : tab === "Reservation" ? (
         <div className={"supabase-calendar-main"}>
             <Header />
+            <ErrorDialog />
             <ReservationTable setReservationInfo={setReservationInfo} />
         </div>
     ) : (
