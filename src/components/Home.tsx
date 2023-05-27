@@ -7,13 +7,11 @@ import RecoverPassword from "./RecoverPassword";
 import ReserveDialog, { ReserveDialogProps } from "./ReserveDialog";
 import ResourceDialog from "./ResourceDialog";
 import Resource from "../lib/resource-utils";
-import Header from "./Header";
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
 import { HeaderContext } from "../App";
 import { useResource } from "../contexts/ResourceContext";
-import ErrorDialog from "./ErrorDialog";
 
 interface HomeProps {
     user: User;
@@ -72,47 +70,43 @@ const Home = ({ user }: HomeProps) => {
         if (resource !== null) addResource(resource);
     };
 
+    const renderResourceDialog = () => {
+        return resourceAdding ? (
+            <ResourceDialog
+                name=""
+                generation=""
+                type=""
+                open={true}
+                resources={resources!.current}
+                onClose={handleResourceDialogClose}
+            />
+        ) : (
+            <></>
+        );
+    };
+
+    const renderReserveDialog = () => {
+        return reservationInfo ? <ReserveDialog {...reservationInfo} /> : <></>;
+    };
+
     // render
     return recoveryToken ? (
         <RecoverPassword
             token={recoveryToken}
             setRecoveryToken={setRecoveryToken}
         />
-    ) : reservationInfo ? (
-        <div className={"supabase-calendar-main"}>
-            <ReserveDialog {...reservationInfo} />
-        </div>
-    ) : resourceAdding ? (
-        <div className={"supabase-calendar-main"}>
-            <ResourceDialog
-                {...{
-                    name: "",
-                    generation: "",
-                    type: "",
-                    open: true,
-                    resources: resources!.current,
-                    onClose: handleResourceDialogClose,
-                }}
-            />
-        </div>
     ) : tab === "Resource" ? (
-        <div className={"supabase-calendar-main"}>
-            <Header />
-            <ErrorDialog />
+        <>
             <ResourceTable setResourceAdding={setResourceAdding} />
-        </div>
+            {renderResourceDialog()}
+        </>
     ) : tab === "Calendar" ? (
-        <div className={"supabase-calendar-main"}>
-            <Header />
-            <ErrorDialog />
+        <>
             <Calendar setReservationInfo={setReservationInfo} />
-        </div>
+            {renderReserveDialog()}
+        </>
     ) : tab === "Reservation" ? (
-        <div className={"supabase-calendar-main"}>
-            <Header />
-            <ErrorDialog />
-            <ReservationTable setReservationInfo={setReservationInfo} />
-        </div>
+        <ReservationTable />
     ) : (
         <>{handleLogout()}</>
     );

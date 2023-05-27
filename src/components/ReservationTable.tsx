@@ -101,9 +101,7 @@ MyDay.title = (date: Date) => {
     return `My awesome week: ${date.toLocaleDateString()}`;
 };
 
-const ReservationTable = (props: {
-    setReservationInfo: (info: ReserveDialogProps) => void;
-}) => {
+const ReservationTable = () => {
     const [pageSize, setPageSize] = useState<number>(20);
     const [showTable, setShowTable] = useState<boolean>(true);
     const renderDateString = (params: GridRenderCellParams<number>) => {

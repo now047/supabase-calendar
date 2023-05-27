@@ -10,10 +10,11 @@ import type {
     UserMetadata,
 } from "@supabase/supabase-js";
 
-import { TabLabel } from "./components/Header";
+import Header, { TabLabel } from "./components/Header";
 import { ColorContextProvider } from "./contexts/ColorContext";
 import { ResourceContextProvider } from "./contexts/ResourceContext";
 import { EventContextProvider } from "./contexts/EventContext";
+import ErrorDialog from "./components/ErrorDialog";
 
 class DummyUAM implements UserAppMetadata {
     provider?: string;
@@ -107,8 +108,14 @@ function App() {
                             <EventContextProvider>
                                 {/* needs to be in Color,Header,ResourceContext */}
                                 <div className="demo-app">
-                                    <Sidebar />
-                                    <Home user={user!} />
+                                    <div className="supabase-calendar-sidebar">
+                                        <Sidebar />
+                                    </div>
+                                    <div className={"supabase-calendar-main"}>
+                                        <Header />
+                                        <ErrorDialog />
+                                        <Home user={user!} />
+                                    </div>
                                 </div>
                             </EventContextProvider>
                         </ResourceContextProvider>

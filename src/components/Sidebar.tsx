@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import {
     Container,
     Box,
@@ -181,7 +181,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="supabase-calendar-sidebar">
+        <div>
             <div className="supabase-calendar-sidebar-section">
                 {renderTypeSelectForm("types")}
                 {renderTypeSelectForm("generations")}
