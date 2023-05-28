@@ -9,11 +9,9 @@ import {
     GridToolbarContainer,
     useGridApiContext,
 } from "@mui/x-data-grid";
-import { Box, Button, Stack } from "@mui/material";
+import { Button } from "@mui/material";
 
 import { toLocalDateString } from "../lib/event-utils";
-import { ReserveDialogProps } from "./ReserveDialog";
-import { HeaderContext } from "../App";
 
 import {
     Calendar as BigCalendar,

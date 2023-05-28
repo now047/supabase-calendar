@@ -3,7 +3,8 @@ import IEvent, { strToTimestamp, toDateString } from "../lib/event-utils";
 import { supabase } from "../lib/api";
 import { getResourceName } from "../lib/resource-utils";
 import { useResource } from "./ResourceContext";
-import { HeaderContext } from "../App";
+import { useHeader } from "./HeaderContext";
+import { useAnnotation } from "./AnnotationContext";
 import { useColor } from "./ColorContext";
 
 type EventContextType = {
@@ -24,7 +25,8 @@ const EventContextProvider = ({ children }: any) => {
     const [events, setEvents] = useState<IEvent[]>([]);
     const [eventSynced, setEventSynced] = useState<boolean>(false);
     const { resources, resourceTypes } = useResource();
-    const { user, setError, eventFromDate } = useContext(HeaderContext);
+    const { user, eventFromDate } = useHeader();
+    const { setError } = useAnnotation();
     const { colors } = useColor();
 
     const DBEventToIEvent = (db_event: any) => {

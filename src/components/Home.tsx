@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import React from "react";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
@@ -10,19 +10,17 @@ import Resource from "../lib/resource-utils";
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
 import ReservationTable from "./ReservationTable";
-import { HeaderContext } from "../App";
+import { useAnnotation } from "../contexts/AnnotationContext";
 import { useResource } from "../contexts/ResourceContext";
+import { useHeader } from "../contexts/HeaderContext";
 
-interface HomeProps {
-    user: User;
-}
-
-const Home = ({ user }: HomeProps) => {
+const Home = () => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [reservationInfo, setReservationInfo] =
         useState<ReserveDialogProps | null>(null);
     const [resourceAdding, setResourceAdding] = useState(false);
-    const { tab, setError } = useContext(HeaderContext);
+    const { tab } = useHeader();
+    const { setError } = useAnnotation();
     const { resources, addResource } = useResource();
 
     interface IResults {

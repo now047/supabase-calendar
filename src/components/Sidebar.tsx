@@ -13,10 +13,10 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
 import { Avatar } from "@mui/material";
 import { Typography } from "@mui/material";
+import { Theme, useTheme } from "@mui/material/styles";
 
 import Resource from "../lib/resource-utils";
 
-import { Theme, useTheme } from "@mui/material/styles";
 import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
 
@@ -194,19 +194,17 @@ const Sidebar = () => {
                         width: "100%",
                     }}
                 >
-                    <Box sx={{ width: "100%" }}>
-                        <DataGrid
-                            rows={selectedResources.map((r) => {
-                                return { ...r, this: r };
-                            })}
-                            columns={resourceTableColumns}
-                            rowsPerPageOptions={[10]}
-                            pageSize={10}
-                            pagination
-                            autoHeight
-                            disableSelectionOnClick
-                        />
-                    </Box>
+                    <DataGrid
+                        rows={selectedResources.map((r) => {
+                            return { ...r, this: r };
+                        })}
+                        columns={resourceTableColumns}
+                        rowsPerPageOptions={[10]}
+                        pageSize={10}
+                        pagination
+                        autoHeight
+                        disableSelectionOnClick
+                    />
                 </Container>
                 <Container
                     sx={{

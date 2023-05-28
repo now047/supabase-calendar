@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Dayjs } from "dayjs";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DraftsIcon from "@mui/icons-material/Drafts";
@@ -8,13 +8,10 @@ import { Stack, Tab, Tabs } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import { HeaderContext } from "../App";
-
-export type TabLabel = "Resource" | "Calendar" | "Reservation";
+import { useHeader, TabLabel } from "../contexts/HeaderContext";
 
 const Header = () => {
-    const { tab, setTab, eventFromDate, setEventFromDate } =
-        useContext(HeaderContext);
+    const { tab, setTab, eventFromDate, setEventFromDate } = useHeader();
 
     const onChange = (event: any, value: TabLabel) => {
         setTab(value);

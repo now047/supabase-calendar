@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import Resource from "../lib/resource-utils";
 import { supabase } from "../lib/api";
-import { HeaderContext } from "../App";
+import { useAnnotation } from "../contexts/AnnotationContext";
 
 type ResourceType = {
     types: Map<string, boolean>;
@@ -47,7 +47,7 @@ const ResourceContextProvider = ({ children }: any) => {
         resources.current
     );
 
-    const { setError } = useContext(HeaderContext);
+    const { setError } = useAnnotation();
 
     useEffect(() => {
         console.log("useEffect on ResourceContext");

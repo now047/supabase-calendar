@@ -1,10 +1,10 @@
 import React, { useContext } from "react";
 import { Alert, Box, IconButton, Slide } from "@mui/material";
-import { HeaderContext } from "../App";
+import { useAnnotation } from "../contexts/AnnotationContext";
 import CloseIcon from "@mui/icons-material/Close";
 
 const ErrorDialog = () => {
-    const { errorText, setError } = useContext(HeaderContext);
+    const { errorText, setError } = useAnnotation();
 
     return errorText ? (
         <Box sx={{ width: "100%" }}>

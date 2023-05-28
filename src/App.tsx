@@ -1,20 +1,22 @@
-import React, { createContext, useState, useEffect, useRef } from "react";
-import dayjs from "dayjs";
+import React, { useState, useEffect } from "react";
 import { supabase } from "./lib/api";
-import Auth from "./components/Auth";
-import Home from "./components/Home";
-import Sidebar from "./components/Sidebar";
 import type {
     User,
     UserAppMetadata,
     UserMetadata,
 } from "@supabase/supabase-js";
 
-import Header, { TabLabel } from "./components/Header";
+import Auth from "./components/Auth";
+import Header from "./components/Header";
+import Home from "./components/Home";
+import Sidebar from "./components/Sidebar";
+import ErrorDialog from "./components/ErrorDialog";
+
 import { ColorContextProvider } from "./contexts/ColorContext";
 import { ResourceContextProvider } from "./contexts/ResourceContext";
 import { EventContextProvider } from "./contexts/EventContext";
-import ErrorDialog from "./components/ErrorDialog";
+import { HeaderContextProvider } from "./contexts/HeaderContext";
+import { AnnotationContextProvider } from "./contexts/AnnotationContext";
 
 class DummyUAM implements UserAppMetadata {
     provider?: string;
@@ -40,43 +42,8 @@ class DummyUser implements User {
     created_at: string;
 }
 
-type HeaderContextType = {
-    user: User | null;
-    tab: TabLabel;
-    setTab: (t: TabLabel) => void;
-    eventFromDate: dayjs.Dayjs;
-    setEventFromDate: (d: dayjs.Dayjs) => void;
-    errorText: string | null;
-    setError: (e: string | null) => void;
-};
-
-const defaultHeaderContext: HeaderContextType = {
-    user: new DummyUser(),
-    tab: "Calendar",
-    setTab: (t: TabLabel) => {},
-    eventFromDate: dayjs(),
-    setEventFromDate: (d: dayjs.Dayjs) => {},
-    errorText: "",
-    setError: (s: string | null) => {},
-};
-export const HeaderContext = createContext(defaultHeaderContext);
-
 function App() {
     const [user, setUser] = useState<User | null>(new DummyUser());
-    const [errorText, setError] = useState<string | null>("");
-    const [tab, setTab] = useState<TabLabel>("Calendar");
-    const [eventFromDate, setEventFromDate] = useState(
-        dayjs().subtract(1, "month")
-    );
-    const currentHeaderContext = {
-        user,
-        tab,
-        setTab,
-        eventFromDate,
-        setEventFromDate,
-        errorText,
-        setError,
-    };
 
     useEffect(() => {
         console.log("useEffect of App.");
@@ -101,26 +68,30 @@ function App() {
         {!user ? <Auth /> : <Home user={user} />}
       */}
             {
-                <HeaderContext.Provider value={currentHeaderContext}>
-                    <ColorContextProvider>
+                <HeaderContextProvider user={user}>
+                    <AnnotationContextProvider>
                         <ResourceContextProvider>
-                            {/* needs to be in HeaderContext */}
-                            <EventContextProvider>
-                                {/* needs to be in Color,Header,ResourceContext */}
-                                <div className="demo-app">
+                            {/* needs to be in AnnotationContext */}
+                            <div className="demo-app">
+                                <ColorContextProvider>
                                     <div className="supabase-calendar-sidebar">
                                         <Sidebar />
                                     </div>
-                                    <div className={"supabase-calendar-main"}>
-                                        <Header />
-                                        <ErrorDialog />
-                                        <Home user={user!} />
-                                    </div>
-                                </div>
-                            </EventContextProvider>
+                                    <EventContextProvider>
+                                        {/* needs to be in Color,Header,Annotation,ResourceContext */}
+                                        <div
+                                            className={"supabase-calendar-main"}
+                                        >
+                                            <Header />
+                                            <ErrorDialog />
+                                            <Home />
+                                        </div>
+                                    </EventContextProvider>
+                                </ColorContextProvider>
+                            </div>
                         </ResourceContextProvider>
-                    </ColorContextProvider>
-                </HeaderContext.Provider>
+                    </AnnotationContextProvider>{" "}
+                </HeaderContextProvider>
             }
         </div>
     );
