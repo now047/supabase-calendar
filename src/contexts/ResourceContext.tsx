@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import Resource from "../lib/resource-utils";
 import { supabase } from "../lib/api";
-import { useAnnotation } from "../contexts/AnnotationContext";
+import { useAnnotation } from "./AnnotationContext";
 
 type ResourceType = {
     types: Map<string, boolean>;

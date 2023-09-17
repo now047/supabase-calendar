@@ -120,7 +120,7 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert severity="error">
-                    "Start time cannot be after the End time."
+                    Start time cannot be after the End time.
                 </Alert>
             </Snackbar>
             <DialogTitle>Make Reservation !</DialogTitle>

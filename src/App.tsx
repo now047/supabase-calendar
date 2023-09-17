@@ -90,7 +90,7 @@ function App() {
                                 </ColorContextProvider>
                             </div>
                         </ResourceContextProvider>
-                    </AnnotationContextProvider>{" "}
+                    </AnnotationContextProvider>
                 </HeaderContextProvider>
             }
         </div>
