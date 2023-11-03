@@ -22,8 +22,11 @@ import Resource from "../lib/resource-utils";
 import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
 import { useEvent } from "../contexts/EventContext";
+import { ResourceDialogPrams } from "./ResourceDialog";
 
-const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
+const ResourceTable = (props: {
+    setResourcePrams: (p: ResourceDialogPrams) => void;
+}) => {
     const [resourceTablePageSize, setResourceTablePageSize] =
         useState<number>(10);
     const { events } = useEvent();
@@ -97,7 +100,12 @@ const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
     ];
 
     const handleResourceAdd = () => {
-        props.setResourceAdding(true);
+        props.setResourcePrams({
+            name: "",
+            generation: "",
+            type: "",
+            note: "",
+        } as ResourceDialogPrams);
     };
 
     function ResourceTableToolBar() {
@@ -140,8 +148,9 @@ const ResourceTable = (props: { setResourceAdding: (b: boolean) => void }) => {
         );
     }
 
-    const handleDubleClickOnTable = () => {
-        console.log("handleDubleClickOnTable");
+    const handleDubleClickOnTable = (params: any) => {
+        console.log("handleDubleClickOnTable", params);
+        props.setResourcePrams(params.row as ResourceDialogPrams);
     };
 
     return (

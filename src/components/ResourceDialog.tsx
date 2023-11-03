@@ -16,19 +16,21 @@ import Stack from "@mui/material/Stack";
 import Resource from "../lib/resource-utils";
 import { useColor } from "../contexts/ColorContext";
 
-export interface ResourceDialogProps {
+export interface ResourceDialogPrams {
     id?: string;
     name: string;
     type: string;
     generation: string;
     note?: string;
-    resources: Resource[];
-    resource_id?: number;
+}
+
+export interface ResourceDialogProps extends ResourceDialogPrams {
     open: boolean;
+    resources: Resource[];
     onClose: (resource: Resource | null) => void;
 }
 
-const ReserveDialog = (props: ResourceDialogProps) => {
+const ResourceDialog = (props: ResourceDialogProps) => {
     const { colors } = useColor();
     const [name, setName] = React.useState(props.name);
     const [nameError, setNameError] = React.useState(false);
@@ -55,6 +57,7 @@ const ReserveDialog = (props: ResourceDialogProps) => {
             console.log(name, type, generation, note, color);
             setColorList((prev) => prev.filter((kv) => kv[0] !== color));
             props.onClose({
+                id: props.id ? Number(props.id) : null,
                 name: name,
                 type: type ?? "",
                 generation: generation ?? "",
@@ -92,7 +95,11 @@ const ReserveDialog = (props: ResourceDialogProps) => {
 
     return (
         <Dialog onClose={handleClose.bind(null, true)} open={props.open}>
-            <DialogTitle>New resource</DialogTitle>
+            {props.id ? (
+                <DialogTitle>Modify resource</DialogTitle>
+            ) : (
+                <DialogTitle>New resource</DialogTitle>
+            )}
             <Box sx={{ "& > :not(style)": { m: 2 } }}>
                 <DemoContainer
                     components={[
@@ -108,6 +115,7 @@ const ReserveDialog = (props: ResourceDialogProps) => {
                             <TextField
                                 error
                                 id="resource-name"
+                                value={name}
                                 label="Name of resource *"
                                 variant="standard"
                                 onChange={handleNameChange}
@@ -115,6 +123,7 @@ const ReserveDialog = (props: ResourceDialogProps) => {
                         ) : (
                             <TextField
                                 id="resource-name"
+                                value={name}
                                 label="Name of resource *"
                                 variant="standard"
                                 onChange={handleNameChange}
@@ -167,6 +176,7 @@ const ReserveDialog = (props: ResourceDialogProps) => {
                         <TextField
                             id="resource-note"
                             label="Note for resource"
+                            value={note}
                             multiline
                             rows={4}
                             helperText="Describe some important note for the resource such as IP address, etc."
@@ -240,4 +250,4 @@ const ReserveDialog = (props: ResourceDialogProps) => {
     );
 };
 
-export default ReserveDialog;
+export default ResourceDialog;

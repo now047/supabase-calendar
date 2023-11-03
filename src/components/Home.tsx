@@ -5,7 +5,7 @@ import { supabase } from "../lib/api";
 import RecoverPassword from "./RecoverPassword";
 
 import ReserveDialog, { ReserveDialogProps } from "./ReserveDialog";
-import ResourceDialog from "./ResourceDialog";
+import ResourceDialog, { ResourceDialogPrams } from "./ResourceDialog";
 import Resource from "../lib/resource-utils";
 import ResourceTable from "./ResourceTable";
 import Calendar from "./Calendar";
@@ -18,7 +18,8 @@ const Home = () => {
     const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
     const [reservationInfo, setReservationInfo] =
         useState<ReserveDialogProps | null>(null);
-    const [resourceAdding, setResourceAdding] = useState(false);
+    const [resourcePrams, setResourcePrams] =
+        useState<ResourceDialogPrams | null>(null);
     const { tab } = useHeader();
     const { setError } = useAnnotation();
     const { resources, addResource } = useResource();
@@ -64,16 +65,19 @@ const Home = () => {
 
     const handleResourceDialogClose = (resource: Resource | null) => {
         console.log("add resource");
-        setResourceAdding(false);
+        //setResourceAdding(false);
+        setResourcePrams(null);
         if (resource !== null) addResource(resource);
     };
 
     const renderResourceDialog = () => {
-        return resourceAdding ? (
+        return resourcePrams ? (
             <ResourceDialog
-                name=""
-                generation=""
-                type=""
+                id={resourcePrams.id}
+                name={resourcePrams.name}
+                generation={resourcePrams.generation}
+                type={resourcePrams.type}
+                note={resourcePrams.note}
                 open={true}
                 resources={resources!.current}
                 onClose={handleResourceDialogClose}
@@ -95,7 +99,7 @@ const Home = () => {
         />
     ) : tab === "Resource" ? (
         <>
-            <ResourceTable setResourceAdding={setResourceAdding} />
+            <ResourceTable setResourcePrams={setResourcePrams} />
             {renderResourceDialog()}
         </>
     ) : tab === "Calendar" ? (

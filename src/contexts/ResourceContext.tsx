@@ -84,7 +84,7 @@ const ResourceContextProvider = ({ children }: any) => {
             const newResourceTypes = { ...resourceTypes };
             if (prev !== undefined) {
                 // add types
-                types.map((type) => {
+                types.forEach((type) => {
                     if (prev.types.get(type) === undefined) {
                         newResourceTypes.types.set(type, true);
                     }
@@ -97,7 +97,7 @@ const ResourceContextProvider = ({ children }: any) => {
                 }
 
                 // add generations
-                generations.map((gen) => {
+                generations.forEach((gen) => {
                     if (prev.generations.get(gen) === undefined) {
                         newResourceTypes.generations.set(gen, true);
                     }
@@ -159,7 +159,8 @@ const ResourceContextProvider = ({ children }: any) => {
                 setError(null);
             }
         } else {
-            let { data: resource, error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            let { data, error } = await supabase
                 .from("resources")
                 .insert({
                     id: r.id,
