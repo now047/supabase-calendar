@@ -13,6 +13,7 @@ const RecoverPassword = ({
 
     const handleNewPassword = async () => {
         const newPassword = newPasswordRef?.current?.value;
+        /*
         const { error } = await supabase.auth.api.updateUser(token, {
             password: newPassword,
         });
@@ -23,6 +24,7 @@ const RecoverPassword = ({
         } else {
             console.error(error);
         }
+        */
     };
 
     return (

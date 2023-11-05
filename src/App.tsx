@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./lib/api";
 import type {
+    Session,
+    Subscription,
     User,
     UserAppMetadata,
     UserMetadata,
 } from "@supabase/supabase-js";
 
-import Auth from "./components/Auth";
+//import Auth from "./components/Auth";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 import Header from "./components/Header";
 import Home from "./components/Home";
 import Sidebar from "./components/Sidebar";
@@ -44,30 +48,38 @@ class DummyUser implements User {
 
 function App() {
     const [user, setUser] = useState<User | null>(new DummyUser());
+    const [session, setSession] = useState<Session | null>(null);
 
     useEffect(() => {
         console.log("useEffect of App.");
-        const session = supabase.auth.session();
+        //const session = supabase.auth.getSession();
         //setUser(session?.user ?? null);
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
+        const { data } = supabase.auth.onAuthStateChange(
+            async (_event, session) => {
                 const currentUser = session?.user;
                 setUser(currentUser ?? null);
+                setSession(session);
             }
         );
 
         return () => {
-            authListener?.unsubscribe();
+            console.log(data);
+            data?.subscription.unsubscribe();
         };
     }, [user]);
 
     return (
         <div className="min-w-full min-h-screen flex items-center justify-center bg-gray-200">
             {/*
-        {!user ? <Auth /> : <Home user={user} />}
-      */}
-            {
+            <Auth />
+        */}
+            {false && !session ? (
+                <Auth
+                    supabaseClient={supabase}
+                    appearance={{ theme: ThemeSupa }}
+                />
+            ) : (
                 <HeaderContextProvider user={user}>
                     <AnnotationContextProvider>
                         <ResourceContextProvider>
@@ -92,7 +104,7 @@ function App() {
                         </ResourceContextProvider>
                     </AnnotationContextProvider>
                 </HeaderContextProvider>
-            }
+            )}
         </div>
     );
 }

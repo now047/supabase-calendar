@@ -63,7 +63,9 @@ const EventContextProvider = ({ children }: any) => {
                 .single();
             if (error) setError(error.message);
             else {
-                console.log("synced event:", DBEventToIEvent(event));
+                if (event) {
+                    console.log("synced event:", DBEventToIEvent(event));
+                }
                 setError(null);
                 fetchEvents();
             }

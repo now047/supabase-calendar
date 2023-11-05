@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Alert, Box, IconButton, Slide } from "@mui/material";
 import { useAnnotation } from "../contexts/AnnotationContext";
 import CloseIcon from "@mui/icons-material/Close";

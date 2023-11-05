@@ -159,7 +159,6 @@ const ResourceContextProvider = ({ children }: any) => {
                 setError(null);
             }
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             let { data, error } = await supabase
                 .from("resources")
                 .insert({
