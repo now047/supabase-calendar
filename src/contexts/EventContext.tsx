@@ -10,14 +10,16 @@ import { useColor } from "./ColorContext";
 type EventContextType = {
     events: IEvent[];
     eventSynced: boolean;
+    checkConflictEvents: (e: IEvent) => IEvent | null;
     syncEvent: (e: IEvent) => Promise<void>;
     deleteEvent: (id: string) => void;
 };
 const defaultEventContext: EventContextType = {
     events: [],
     eventSynced: false,
-    syncEvent: (e: IEvent) => new Promise<void>(() => {}),
-    deleteEvent: async (id: string) => {},
+    checkConflictEvents: (_e: IEvent) => null,
+    syncEvent: (_e: IEvent) => new Promise<void>(() => {}),
+    deleteEvent: async (_id: string) => {},
 };
 export const EventContext = createContext(defaultEventContext);
 
@@ -47,31 +49,49 @@ const EventContextProvider = ({ children }: any) => {
             resources!.current.filter((r) => r.id === id)[0].display_color
         );
 
+    const checkConflictEvents = (target: IEvent) => {
+        let conflictEvent: IEvent | null = null;
+        events.every((e: IEvent, _i: number, _evs) => {
+            if (target.id == e.id) return true;
+            if (target.resource_id !== e.resource_id) return true;
+            if (target.start <= e.start && e.start < target.end) {
+                conflictEvent = e;
+                return false;
+            }
+            if (e.start <= target.start && target.start < e.end) {
+                conflictEvent = e;
+                return false;
+            }
+            return true;
+        });
+        return conflictEvent;
+    };
+
     const syncEvent = async (e: IEvent) => {
-        console.log("syncing DB:", e);
         if (e.id) {
-            let { data: event, error } = await supabase
+            console.log("syncing DB:", e);
+            let { data, error } = await supabase
                 .from("events")
                 .update({
-                    id: e.id,
                     title: e.purpose_of_use,
                     start: toDateString(e.start),
                     end: toDateString(e.end),
                     color: getResouceColor(e.resource_id),
                     resource_id: e.resource_id,
                 })
-                .single();
+                .eq("id", e.id)
+                .select();
             if (error) setError(error.message);
             else {
-                if (event) {
-                    console.log("synced event:", DBEventToIEvent(event));
+                if (data) {
+                    console.log("synced event:", DBEventToIEvent(data[0]));
                 }
                 setError(null);
                 fetchEvents();
             }
         } else {
-            console.log("syncing DB new entry");
-            let { data: event, error } = await supabase
+            console.log("syncing DB new entry", e, user);
+            let { data, error } = await supabase
                 .from("events")
                 .insert({
                     title: e.purpose_of_use,
@@ -81,10 +101,12 @@ const EventContextProvider = ({ children }: any) => {
                     user_id: user!.id,
                     resource_id: e.resource_id,
                 })
-                .single();
+                .select();
             if (error) setError(error.message);
             else {
-                setEvents([...events, DBEventToIEvent(event)]);
+                if (data) {
+                    setEvents([...events, DBEventToIEvent(data[0])]);
+                }
                 setError(null);
                 fetchEvents();
             }
@@ -92,10 +114,7 @@ const EventContextProvider = ({ children }: any) => {
     };
 
     const deleteEvent = async (id: string) => {
-        let { data: event, error } = await supabase
-            .from("events")
-            .delete()
-            .eq("id", id);
+        let { error } = await supabase.from("events").delete().eq("id", id);
         if (error) setError(error.message);
         else {
             setError(null);
@@ -106,6 +125,7 @@ const EventContextProvider = ({ children }: any) => {
     const currentEventContext = {
         events: events,
         eventSynced: eventSynced,
+        checkConflictEvents: checkConflictEvents,
         syncEvent: syncEvent,
         deleteEvent: deleteEvent,
     };

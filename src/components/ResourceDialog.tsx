@@ -22,6 +22,7 @@ export interface ResourceDialogPrams {
     type: string;
     generation: string;
     note?: string;
+    display_color?: number;
 }
 
 export interface ResourceDialogProps extends ResourceDialogPrams {
@@ -37,12 +38,17 @@ const ResourceDialog = (props: ResourceDialogProps) => {
     const [type, setType] = React.useState(props.type);
     const [generation, setGeneration] = React.useState(props.generation);
     const [note, setNote] = React.useState(props.note);
-    const [colorList, setColorList] = React.useState(
-        Array.from(colors).filter(
-            (kv) => !props.resources.map((r) => r.display_color).includes(kv[0])
-        )
+    const colorList = Array.from(colors).filter(
+        (kv) =>
+            !props.resources.map((r) => r.display_color).includes(kv[0]) ||
+            (props.display_color && kv[0] == props.display_color)
     );
-    const [color, setColor] = React.useState(colorList[0][0]);
+    const initialCorrorIndex = props.display_color
+        ? colorList.findIndex((kv) => {
+              return kv[0] == props.display_color;
+          })
+        : 0;
+    const [color, setColor] = React.useState(colorList[initialCorrorIndex][0]);
 
     const resourceTypes = ["Grid", "Single", "Mini"];
 
@@ -55,7 +61,6 @@ const ResourceDialog = (props: ResourceDialogProps) => {
                 return;
             }
             console.log(name, type, generation, note, color);
-            setColorList((prev) => prev.filter((kv) => kv[0] !== color));
             props.onClose({
                 id: props.id ? Number(props.id) : null,
                 name: name,

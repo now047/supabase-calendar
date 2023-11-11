@@ -89,6 +89,10 @@ const ReserveDialog = (props: ReserveDialogProps) => {
         setPurposeOfUseError(false);
     };
 
+    const handleCancel = () => {
+        props.onDelete(undefined, undefined);
+    };
+
     const handleDelete = () => {
         props.onDelete(props.id, purposeOfUse);
     };
@@ -123,7 +127,11 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                     Start time cannot be after the End time.
                 </Alert>
             </Snackbar>
-            <DialogTitle>Make Reservation !</DialogTitle>
+            {props.id ? (
+                <DialogTitle>Update Reservation !</DialogTitle>
+            ) : (
+                <DialogTitle>Make Reservation !</DialogTitle>
+            )}
 
             <Box sx={{ "& > :not(style)": { m: 2 } }} width={300}>
                 <DemoContainer
@@ -221,14 +229,15 @@ const ReserveDialog = (props: ReserveDialogProps) => {
                             justifyContent={"space-between"}
                             direction="row"
                         >
+                            <Button onClick={handleCancel} variant="text">
+                                Cancel
+                            </Button>
                             {props.id ? (
                                 <Button onClick={handleDelete} variant="text">
                                     Delete
                                 </Button>
                             ) : (
-                                <Button onClick={handleDelete} variant="text">
-                                    Cancel
-                                </Button>
+                                <></>
                             )}
                             <Button
                                 onClick={handleClose.bind(null, false)}

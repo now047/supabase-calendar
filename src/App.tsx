@@ -55,17 +55,17 @@ function App() {
         //const session = supabase.auth.getSession();
         //setUser(session?.user ?? null);
 
-        const { data } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                const currentUser = session?.user;
-                setUser(currentUser ?? null);
-                setSession(session);
-            }
-        );
+        // const { data } = supabase.auth.onAuthStateChange(
+        //     async (_event, session) => {
+        //         const currentUser = session?.user;
+        //         setUser(currentUser ?? null);
+        //         setSession(session);
+        //     }
+        // );
 
         return () => {
-            console.log(data);
-            data?.subscription.unsubscribe();
+            // console.log(data);
+            // data?.subscription.unsubscribe();
         };
     }, [user]);
 

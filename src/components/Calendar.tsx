@@ -26,16 +26,24 @@ import { ReserveDialogProps } from "./ReserveDialog";
 // import { useColor } from "../contexts/ColorContext";
 import { useResource } from "../contexts/ResourceContext";
 import { useEvent } from "../contexts/EventContext";
+import { useAnnotation } from "../contexts/AnnotationContext";
+
+interface IEventWithMessage extends IEvent {
+    message: string | null;
+}
 
 const Calendar = (props: {
     setReservationInfo: (info: ReserveDialogProps | null) => void;
 }) => {
-    const { events, eventSynced, syncEvent, deleteEvent } = useEvent();
+    const { events, eventSynced, checkConflictEvents, syncEvent, deleteEvent } =
+        useEvent();
     const { selectedResources } = useResource();
     // const { colors } = useColor();
     const [hoverEvent, setHoverEvent] = useState<
-        [IEvent | null, NodeJS.Timeout]
+        [IEventWithMessage | null, NodeJS.Timeout]
     >([null, setTimeout(() => {}, 0)]);
+
+    const { errorText, setError } = useAnnotation();
 
     const businessHours = {
         daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
@@ -57,9 +65,30 @@ const Calendar = (props: {
     // };
 
     const modifyEventHandler = (event: IEvent | null) => {
-        props.setReservationInfo(null);
         if (event !== null) {
-            syncEvent(event);
+            console.log(event);
+            const conflictEvent = checkConflictEvents(event);
+            if (conflictEvent === null) {
+                // there is no conflict in memory.
+                syncEvent(event);
+                props.setReservationInfo(null);
+            } else {
+                // there is some confilict reservations.
+                setHoverEvent([
+                    {
+                        id: Number(conflictEvent.id),
+                        purpose_of_use: conflictEvent.purpose_of_use,
+                        color: conflictEvent.color,
+                        start: conflictEvent.start,
+                        end: conflictEvent.end,
+                        resource_id: conflictEvent.resource_id,
+                        resource_name: conflictEvent.resource_name,
+                        message:
+                            "There is conflict events. Can't make reservation!.",
+                    },
+                    setTimeout(handleMouseLeave.bind(null, null), 3000),
+                ]);
+            }
         }
     };
 
@@ -125,10 +154,11 @@ const Calendar = (props: {
         );
     };
 
+    const calendarRef = React.createRef<FullCalendar>();
     const handleUpdatedEvents = (updated_events: EventApi[]) => {
         let is_changed = false;
         events.map((e) => {
-            let ie = updated_events.find((ie, i, api) => {
+            let ie = updated_events.find((ie, _i, _api) => {
                 return Number(ie.id) == e.id;
             });
             if (ie !== undefined && eventDiffers(e, ie)) {
@@ -141,9 +171,16 @@ const Calendar = (props: {
                     //allDay: e.allDay,
                     resource_id: e.resource_id,
                 };
-                console.log("Update event:", e);
-                is_changed = true;
-                syncEvent(e);
+
+                const conflictEvent = checkConflictEvents(e);
+                if (conflictEvent === null) {
+                    console.log("Update event:", e);
+                    is_changed = true;
+                    syncEvent(e);
+                } else {
+                    // there is some confilict reservations.
+                    setError("Reservation conflicts.");
+                }
             }
             return e;
         });
@@ -192,6 +229,7 @@ const Calendar = (props: {
                 resource_id: 0,
                 //resource_id: getResourceId(eventInfo.event.backgroundColor),
                 resource_name: eventInfo.event.title,
+                message: null,
             },
             setTimeout(handleMouseLeave.bind(null, null), 3000),
         ]);
@@ -205,17 +243,26 @@ const Calendar = (props: {
 
     const hoverEventStr = () => {
         if (hoverEvent[0] === null) return "none";
+        const event = hoverEvent[0];
         let ret = (
             <>
-                Resource: {hoverEvent[0].resource_name}
+                {event.message ? (
+                    <>
+                        Message: {event.message}
+                        <br />
+                    </>
+                ) : (
+                    ""
+                )}
+                Resource: {event.resource_name}
                 <br />
-                Poupose: {hoverEvent[0].purpose_of_use}
+                Poupose: {event.purpose_of_use}
                 <br />
-                {hoverEvent[0].start !== undefined
+                {event.start !== undefined
                     ? `Start: ${toLocalDateString(hoverEvent[0].start)}`
                     : ""}
                 <br />
-                {hoverEvent[0].end !== undefined
+                {event.end !== undefined
                     ? `End  : ${toLocalDateString(hoverEvent[0].end)}`
                     : ""}
             </>
@@ -269,7 +316,7 @@ const Calendar = (props: {
                         //allDay: true,
                     };
                 }),
-        [events, selectedResources]
+        [errorText, events, selectedResources]
     );
 
     return (
@@ -285,6 +332,7 @@ const Calendar = (props: {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <FullCalendar
+                ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 locales={[jaLocale]}

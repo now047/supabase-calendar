@@ -141,20 +141,20 @@ const ResourceContextProvider = ({ children }: any) => {
     const addResource = async (r: Resource) => {
         console.log("addResource:", r);
         if (r.id) {
-            let { data: resource, error } = await supabase
+            let { data, error } = await supabase
                 .from("resources")
                 .update({
-                    id: r.id,
                     name: r.name,
                     type: r.type,
                     generation: r.generation,
                     display_color: r.display_color,
                     note: r.note,
                 })
-                .single();
+                .eq("id", r.id)
+                .select();
             if (error) setError(error.message);
             else {
-                console.log("Updated resources", resource);
+                console.log("Updated resources", data);
                 await fetchResources();
                 setError(null);
             }
@@ -162,16 +162,16 @@ const ResourceContextProvider = ({ children }: any) => {
             let { data, error } = await supabase
                 .from("resources")
                 .insert({
-                    id: r.id,
                     name: r.name,
                     type: r.type,
                     generation: r.generation,
                     display_color: r.display_color,
                     note: r.note,
                 })
-                .single();
+                .select();
             if (error) setError(error.message);
             else {
+                console.log("Updated resources", data);
                 await fetchResources();
                 setError(null);
             }

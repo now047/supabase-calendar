@@ -78,6 +78,7 @@ const Home = () => {
                 generation={resourcePrams.generation}
                 type={resourcePrams.type}
                 note={resourcePrams.note}
+                display_color={resourcePrams.display_color}
                 open={true}
                 resources={resources!.current}
                 onClose={handleResourceDialogClose}
